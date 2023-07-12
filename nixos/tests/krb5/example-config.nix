@@ -12,78 +12,56 @@ import ../make-test-python.nix ({ pkgs, ...} : {
       krb5 = {
         enable = true;
         kerberos = pkgs.krb5;
-        libdefaults = {
-          default_realm = "ATHENA.MIT.EDU";
-        };
-        realms = {
-          "ATHENA.MIT.EDU" = {
-            admin_server = "athena.mit.edu";
-            kdc = [
-              "athena01.mit.edu"
-              "athena02.mit.edu"
-            ];
+        settings = {
+          libdefaults = {
+            default_realm = "ATHENA.MIT.EDU";
           };
-        };
-        domain_realm = {
-          "example.com" = "EXAMPLE.COM";
-          ".example.com" = "EXAMPLE.COM";
-        };
-        capaths = {
-          "ATHENA.MIT.EDU" = {
-            "EXAMPLE.COM" = ".";
+          realms = {
+            "ATHENA.MIT.EDU" = {
+              admin_server = "athena.mit.edu";
+              kdc = [
+                "athena01.mit.edu"
+                "athena02.mit.edu"
+              ];
+            };
           };
-          "EXAMPLE.COM" = {
-            "ATHENA.MIT.EDU" = ".";
+          domain_realm = {
+            "example.com" = "EXAMPLE.COM";
+            ".example.com" = "EXAMPLE.COM";
           };
-        };
-        appdefaults = {
-          pam = {
-            debug = false;
-            ticket_lifetime = 36000;
-            renew_lifetime = 36000;
-            max_timeout = 30;
-            timeout_shift = 2;
-            initial_timeout = 1;
+          capaths = {
+            "ATHENA.MIT.EDU" = {
+              "EXAMPLE.COM" = ".";
+            };
+            "EXAMPLE.COM" = {
+              "ATHENA.MIT.EDU" = ".";
+            };
           };
-        };
-        plugins = {
-          ccselect = {
-            disable = "k5identity";
+          appdefaults = {
+            pam = {
+              debug = false;
+              ticket_lifetime = 36000;
+              renew_lifetime = 36000;
+              max_timeout = 30;
+              timeout_shift = 2;
+              initial_timeout = 1;
+            };
+          };
+          plugins.ccselect.disable = "k5identity";
+          logging = {
+            kdc = "SYSLOG:NOTICE";
+            admin_server = "SYSLOG:NOTICE";
+            default = "SYSLOG:NOTICE";
           };
         };
         extraConfig = ''
-          [logging]
-            kdc          = SYSLOG:NOTICE
-            admin_server = SYSLOG:NOTICE
-            default      = SYSLOG:NOTICE
+          includedir /etc/krb5.conf.d
         '';
       };
     };
 
   testScript =
     let snapshot = pkgs.writeText "krb5-with-example-config.conf" ''
-      [libdefaults]
-        default_realm = ATHENA.MIT.EDU
-
-      [realms]
-        ATHENA.MIT.EDU = {
-          admin_server = athena.mit.edu
-          kdc = athena01.mit.edu
-          kdc = athena02.mit.edu
-        }
-
-      [domain_realm]
-        .example.com = EXAMPLE.COM
-        example.com = EXAMPLE.COM
-
-      [capaths]
-        ATHENA.MIT.EDU = {
-          EXAMPLE.COM = .
-        }
-        EXAMPLE.COM = {
-          ATHENA.MIT.EDU = .
-        }
-
       [appdefaults]
         pam = {
           debug = false
@@ -94,15 +72,39 @@ import ../make-test-python.nix ({ pkgs, ...} : {
           timeout_shift = 2
         }
 
+      [capaths]
+        ATHENA.MIT.EDU = {
+          EXAMPLE.COM = .
+        }
+        EXAMPLE.COM = {
+          ATHENA.MIT.EDU = .
+        }
+
+      [domain_realm]
+        .example.com = EXAMPLE.COM
+        example.com = EXAMPLE.COM
+
+      [libdefaults]
+        default_realm = ATHENA.MIT.EDU
+
+      [logging]
+        admin_server = SYSLOG:NOTICE
+        default = SYSLOG:NOTICE
+        kdc = SYSLOG:NOTICE
+
       [plugins]
         ccselect = {
           disable = k5identity
         }
 
-      [logging]
-        kdc          = SYSLOG:NOTICE
-        admin_server = SYSLOG:NOTICE
-        default      = SYSLOG:NOTICE
+      [realms]
+        ATHENA.MIT.EDU = {
+          admin_server = athena.mit.edu
+          kdc = athena01.mit.edu
+          kdc = athena02.mit.edu
+        }
+
+      includedir /etc/krb5.conf.d
     '';
   in ''
     machine.succeed(
