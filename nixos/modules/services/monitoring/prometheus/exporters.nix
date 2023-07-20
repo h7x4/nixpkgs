@@ -35,6 +35,7 @@ let
     "dovecot"
     "fastly"
     "fritzbox"
+    "github"
     "graphite"
     "influxdb"
     "ipmi"
