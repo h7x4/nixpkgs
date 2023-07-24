@@ -10,7 +10,6 @@
   ./config/gtk/gtk-icon-cache.nix
   ./config/i18n.nix
   ./config/iproute2.nix
-  ./config/krb5/default.nix
   ./config/ldap.nix
   ./config/locale.nix
   ./config/malloc.nix
@@ -305,6 +304,7 @@
   ./security/duosec.nix
   ./security/google_oslogin.nix
   ./security/ipa.nix
+  ./security/krb5.nix
   ./security/lock-kernel-modules.nix
   ./security/misc.nix
   ./security/oath.nix

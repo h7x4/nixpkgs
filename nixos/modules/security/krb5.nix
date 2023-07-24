@@ -35,11 +35,15 @@ let
 
   mkRemovedOptionModule' = name: reason: mkRemovedOptionModule ["krb5" name] reason;
   mkRemovedOptionModuleCfg = name: mkRemovedOptionModule' name ''
-    The option `krb5.${name}' has been removed. Use `krb5.settings.${name}' for
-    structured configuration or `krb5.extraConfig' for plain-text configuration.
+    The option `krb5.${name}' has been removed. Use
+    `security.krb5.settings.${name}' for structured configuration or
+    `security.krb5.extraConfig' for plain-text configuration.
+  '';
+  mkMovedOptionModule = name: mkRemovedOptionModule' name ''
+    The option `krb5.${name}' has been moved to `security.krb5.${name}'.
   '';
 
-  cfg = config.krb5;
+  cfg = config.security.krb5;
 in {
   imports = [
     (mkRemovedOptionModuleCfg "libdefaults")
@@ -49,14 +53,16 @@ in {
     (mkRemovedOptionModuleCfg "appdefaults")
     (mkRemovedOptionModuleCfg "plugins")
     (mkRemovedOptionModule' "config" ''
-      The option `krb5.config' has been removed. Use `krb5.settings'
-      for structured configuration or `krb5.extraConfig' for plain-text
-      configuration.
+      The option `krb5.config' has been removed. Use `security.krb5.settings'
+      for structured configuration or `security.krb5.extraConfig' for
+      plain-text configuration.
     '')
+    (mkMovedOptionModule "extraConfig")
+    (mkMovedOptionModule "kerberos")
   ];
 
   options = {
-    krb5 = {
+    security.krb5 = {
       enable = mkEnableOption (mdDoc "building krb5.conf, configuration file for Kerberos V");
 
       kerberos = mkPackageOption pkgs "krb5" {
@@ -119,6 +125,6 @@ in {
     };
 
     # Put between mkBefore and default priority
-    krb5.extraConfig = mkOrder 750 (formatToplevel cfg.settings);
+    security.krb5.extraConfig = mkOrder 750 (formatToplevel cfg.settings);
   };
 }
