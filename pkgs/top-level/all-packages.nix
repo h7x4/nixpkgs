@@ -31867,6 +31867,8 @@ with pkgs;
   };
   wireshark-qt = wireshark;
 
+  wireshark-plugins = recurseIntoAttrs (callPackage ../applications/networking/sniffers/wireshark/plugins { });
+
   qtwirediff = qt6Packages.callPackage ../applications/networking/sniffers/qtwirediff {};
 
   tshark = wireshark-cli;
