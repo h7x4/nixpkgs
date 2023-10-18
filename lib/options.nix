@@ -187,6 +187,19 @@ rec {
   */
   mkPackageOptionMD = mkPackageOption;
 
+  mkPortOption =
+    port:
+    {
+        nullable ? false,
+        example ? null,
+    }:
+    mkOption {
+      default = port;
+      example = if port != 8080 then 8080 else 8081;
+      description = "";
+      type = (if nullable then lib.types.nullOr else lib.id) lib.types.port;
+    };
+
   /* This option accepts anything, but it does not produce any result.
 
      This is useful for sharing a module across different module sets
