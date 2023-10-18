@@ -18,20 +18,20 @@ let
     ${cfg.extraImports}
     factory = util.BuildFactory()
     c = BuildmasterConfig = dict(
-     workers       = [${concatStringsSep "," cfg.workers}],
+     workers       = [${cfg.workers}],
      protocols     = { 'pb': {'port': ${toString cfg.pbPort} } },
      title         = '${escapeStr cfg.title}',
      titleURL      = '${escapeStr cfg.titleUrl}',
      buildbotURL   = '${escapeStr cfg.buildbotUrl}',
      db            = dict(db_url='${escapeStr cfg.dbUrl}'),
      www           = dict(port=${toString cfg.port}),
-     change_source = [ ${concatStringsSep "," cfg.changeSource} ],
-     schedulers    = [ ${concatStringsSep "," cfg.schedulers} ],
-     builders      = [ ${concatStringsSep "," cfg.builders} ],
-     services      = [ ${concatStringsSep "," cfg.reporters} ],
-     configurators = [ ${concatStringsSep "," cfg.configurators} ],
+     change_source = [ ${cfg.changeSource} ],
+     schedulers    = [ ${cfg.schedulers} ],
+     builders      = [ ${cfg.builders} ],
+     services      = [ ${cfg.reporters} ],
+     configurators = [ ${cfg.configurators} ],
     )
-    for step in [ ${concatStringsSep "," cfg.factorySteps} ]:
+    for step in [ ${cfg.factorySteps} ]:
       factory.addStep(step)
 
     ${cfg.extraConfig}
@@ -63,7 +63,7 @@ in {
     services.buildbot-master = {
 
       factorySteps = mkOption {
-        type = types.listOf types.str;
+        type = types.commas;
         description = lib.mdDoc "Factory Steps";
         default = [];
         example = [
@@ -73,7 +73,7 @@ in {
       };
 
       changeSource = mkOption {
-        type = types.listOf types.str;
+        type = types.commas;
         description = lib.mdDoc "List of Change Sources.";
         default = [];
         example = [
@@ -82,7 +82,7 @@ in {
       };
 
       configurators = mkOption {
-        type = types.listOf types.str;
+        type = types.commas;
         description = lib.mdDoc "Configurator Steps, see https://docs.buildbot.net/latest/manual/configuration/configurators.html";
         default = [];
         example = [
@@ -118,7 +118,7 @@ in {
       };
 
       schedulers = mkOption {
-        type = types.listOf types.str;
+        type = types.commas;
         description = lib.mdDoc "List of Schedulers.";
         default = [
           "schedulers.SingleBranchScheduler(name='all', change_filter=util.ChangeFilter(branch='master'), treeStableTimer=None, builderNames=['runtests'])"
@@ -127,7 +127,7 @@ in {
       };
 
       builders = mkOption {
-        type = types.listOf types.str;
+        type = types.commas;
         description = lib.mdDoc "List of Builders.";
         default = [
           "util.BuilderConfig(name='runtests',workernames=['example-worker'],factory=factory)"
@@ -135,14 +135,14 @@ in {
       };
 
       workers = mkOption {
-        type = types.listOf types.str;
+        type = types.commas;
         description = lib.mdDoc "List of Workers.";
         default = [ "worker.Worker('example-worker', 'pass')" ];
       };
 
       reporters = mkOption {
         default = [];
-        type = types.listOf types.str;
+        type = types.commas;
         description = lib.mdDoc "List of reporter objects used to present build status to various users.";
       };
 
