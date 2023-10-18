@@ -295,7 +295,7 @@ in {
       };
 
       statePath = mkOption {
-        type = types.str;
+        type = types.path;
         default = "/var/gitlab/state";
         description = lib.mdDoc ''
           GitLab state directory. Configuration, repositories and
@@ -309,7 +309,7 @@ in {
       };
 
       extraEnv = mkOption {
-        type = types.attrsOf types.str;
+        type = with types; attrsOf str;
         default = {};
         description = lib.mdDoc ''
           Additional environment variables for the GitLab environment.
@@ -328,14 +328,14 @@ in {
       };
 
       backup.path = mkOption {
-        type = types.str;
+        type = types.path;
         default = cfg.statePath + "/backup";
         defaultText = literalExpression ''config.${opt.statePath} + "/backup"'';
         description = lib.mdDoc "GitLab path for backups.";
       };
 
       backup.keepTime = mkOption {
-        type = types.int;
+        type = types.int.unsigned;
         default = 0;
         example = 48;
         apply = x: x * 60 * 60;
@@ -359,10 +359,10 @@ in {
                 "tar"
               ];
           in
-            either value (listOf value);
+            coercedTo value lib.singleTon (listOf value);
         default = [];
         example = [ "artifacts" "lfs" ];
-        apply = x: if isString x then x else concatStringsSep "," x;
+        apply = concatStringsSep ","
         description = lib.mdDoc ''
           Directories to exclude from the backup. The example excludes
           CI artifacts and LFS objects from the backups. The
@@ -375,7 +375,7 @@ in {
       };
 
       backup.uploadOptions = mkOption {
-        type = types.attrs;
+        type = yaml.type;
         default = {};
         example = literalExpression ''
           {
@@ -456,13 +456,13 @@ in {
       };
 
       databasePool = mkOption {
-        type = types.int;
+        type = types.int.positive;
         default = 5;
         description = lib.mdDoc "Database connection pool size.";
       };
 
       extraDatabaseConfig = mkOption {
-        type = types.attrs;
+        type = yaml.type;
         default = {};
         description = lib.mdDoc "Extra configuration in config/database.yml.";
       };
@@ -475,7 +475,7 @@ in {
       };
 
       extraGitlabRb = mkOption {
-        type = types.str;
+        type = types.lines;
         default = "";
         example = ''
           if Rails.env.production?
@@ -609,7 +609,7 @@ in {
           description = lib.mdDoc "External address used to access registry from the internet";
         };
         externalPort = mkOption {
-          type = types.int;
+          type = types.port;
           description = lib.mdDoc "External port used to access registry from the internet";
         };
       };
@@ -640,7 +640,7 @@ in {
         };
 
         passwordFile = mkOption {
-          type = types.nullOr types.path;
+          type = with types; nullOr path;
           default = null;
           description = lib.mdDoc ''
             File containing the password of the SMTP server for GitLab.
@@ -775,7 +775,7 @@ in {
             };
 
             api-secret-key = mkOption {
-              type = with types; nullOr str;
+              type = with types; nullOr path;
               default = "${cfg.statePath}/gitlab_pages_secret";
               internal = true;
               description = lib.mdDoc ''
@@ -871,13 +871,13 @@ in {
       };
 
       extraShellConfig = mkOption {
-        type = types.attrs;
+        type = yaml.type;
         default = {};
         description = lib.mdDoc "Extra configuration to merge into shell-config.yml";
       };
 
       puma.workers = mkOption {
-        type = types.int;
+        type = types.positive;
         default = 2;
         apply = x: builtins.toString x;
         description = lib.mdDoc ''
@@ -893,7 +893,7 @@ in {
       };
 
       puma.threadsMin = mkOption {
-        type = types.int;
+        type = types.int.unsigned;
         default = 0;
         apply = x: builtins.toString x;
         description = lib.mdDoc ''
@@ -908,7 +908,7 @@ in {
       };
 
       puma.threadsMax = mkOption {
-        type = types.int;
+        type = types.int.unsigned;
         default = 4;
         apply = x: builtins.toString x;
         description = lib.mdDoc ''
@@ -939,7 +939,7 @@ in {
       };
 
       sidekiq.memoryKiller.maxMemory = mkOption {
-        type = types.int;
+        type = types.int.positive;
         default = 2000;
         apply = x: builtins.toString (x * 1024);
         description = lib.mdDoc ''
@@ -949,7 +949,7 @@ in {
       };
 
       sidekiq.memoryKiller.graceTime = mkOption {
-        type = types.int;
+        type = types.int.unsigned;
         default = 900;
         apply = x: builtins.toString x;
         description = lib.mdDoc ''
@@ -959,7 +959,7 @@ in {
       };
 
       sidekiq.memoryKiller.shutdownWait = mkOption {
-        type = types.int;
+        type = types.int.unsigned;
         default = 30;
         apply = x: builtins.toString x;
         description = lib.mdDoc ''
@@ -984,7 +984,7 @@ in {
         };
 
         keep = mkOption {
-          type = types.int;
+          type = types.int.unsigned;
           default = 30;
           description = lib.mdDoc "How many rotations to keep.";
         };
