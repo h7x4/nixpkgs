@@ -89,7 +89,7 @@ in {
 
     verbose = mkOption {
       default = 1;
-      type = types.int;
+      type = types.ints.between 0 3;
       description = lib.mdDoc ''
         Log level for the mpdscribble daemon.
       '';
@@ -98,7 +98,7 @@ in {
     journalInterval = mkOption {
       default = 600;
       example = 60;
-      type = types.int;
+      type = types.ints.positive;
       description = lib.mdDoc ''
         How often should mpdscribble save the journal file? [seconds]
       '';

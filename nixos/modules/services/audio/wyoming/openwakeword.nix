@@ -81,7 +81,7 @@ in
     };
 
     triggerLevel = mkOption {
-      type = int;
+      type = ints.unsigned;
       default = 1;
       description = mdDoc ''
         Number of activations before a detection is registered.

@@ -209,7 +209,7 @@ in
               };
 
               maxbw = mkOption {
-                type = types.nullOr types.int;
+                type = types.nullOr types.ints.unsigned;
                 default = null;
                 description = lib.mdDoc ''
                   Abort archival if upstream bandwidth usage in bytes
@@ -218,7 +218,7 @@ in
               };
 
               maxbwRateUp = mkOption {
-                type = types.nullOr types.int;
+                type = types.nullOr types.ints.unsigned;
                 default = null;
                 example = literalExpression "25 * 1000";
                 description = lib.mdDoc ''
@@ -227,7 +227,7 @@ in
               };
 
               maxbwRateDown = mkOption {
-                type = types.nullOr types.int;
+                type = types.nullOr types.ints.unsigned;
                 default = null;
                 example = literalExpression "50 * 1000";
                 description = lib.mdDoc ''

@@ -223,7 +223,7 @@ in
     securePort = mkOption {
       description = lib.mdDoc "Kubernetes apiserver secure port.";
       default = 6443;
-      type = int;
+      type = port;
     };
 
     apiAudiences = mkOption {
@@ -298,7 +298,7 @@ in
         <https://github.com/kubernetes/community/blob/master/contributors/devel/logging.md>
       '';
       default = null;
-      type = nullOr int;
+      type = nullOr (ints.between 0 5);
     };
 
     webhookConfig = mkOption {
