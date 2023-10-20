@@ -1,10 +1,13 @@
 { system ? builtins.currentSystem
 , config ? { }
-, pkgs ? import ../.. { inherit system config; }
+, pkgs ? import ../../.. { inherit system config; }
 }:
 
+# Minimal.epub was generated using
+# nix-shell -p pandoc --command "pandoc --metadata title='minimal' -o minimal.epub <(echo 'Hello World!')"
+
 let
-  inherit (import ../lib/testing-python.nix { inherit system pkgs; }) makeTest;
+  inherit (import ../../lib/testing-python.nix { inherit system pkgs; }) makeTest;
   inherit (pkgs.lib) concatStringsSep maintainers mapAttrs mkMerge
     removeSuffix splitString;
 
@@ -71,8 +74,7 @@ mapAttrs
         libraries = [ "/var/lib/calibre-server" ];
       } // testConfig.calibreConfig or {};
       librariesInitScript = path: ''
-        ${nodeName}.execute("touch /tmp/test.epub")
-        ${nodeName}.execute("zip -r /tmp/test.zip /tmp/test.epub")
+        ${nodeName}.execute("zip -r /tmp/test.zip ${./minimal.epub}")
         ${nodeName}.execute("mkdir -p ${path}")
         ${nodeName}.execute("calibredb add -d --with-library ${path} /tmp/test.zip")
       '';
