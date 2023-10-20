@@ -243,7 +243,7 @@ in
       #lxd = 210; # unused
       #kibana = 211;# dynamically allocated as of 2021-09-03
       xtreemfs = 212;
-      calibre-server = 213;
+      #calibre-server = 213; #dynamically allocated as of 2023-10-20
       #heapster = 214; #dynamically allocated as of 2021-09-17
       bepasty = 215;
       # pumpio = 216; # unused, removed 2018-02-24
@@ -562,7 +562,7 @@ in
       #lxd = 210; # unused
       #kibana = 211;
       xtreemfs = 212;
-      calibre-server = 213;
+      #calibre-server = 213; #dynamically allocated as of 2023-10-20
       bepasty = 215;
       # pumpio = 216; # unused, removed 2018-02-24
       nm-openvpn = 217;

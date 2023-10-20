@@ -6,17 +6,8 @@ let
 
   cfg = config.services.calibre-server;
 
-  documentationLink = "https://manual.calibre-ebook.com";
-  generatedDocumentationLink = documentationLink + "/generated/en/calibre-server.html";
-
-  execFlags = (concatStringsSep " "
-    (mapAttrsToList (k: v: "${k} ${toString v}") (filterAttrs (name: value: value != null) {
-      "--listen-on" = cfg.host;
-      "--port" = cfg.port;
-      "--auth-mode" = cfg.auth.mode;
-      "--userdb" = cfg.auth.userDb;
-    }) ++ [(optionalString (cfg.auth.enable == true) "--enable-auth")])
-  );
+  documentationLinkRoot = "https://manual.calibre-ebook.com";
+  serverCliDocumentationLink = documentationLinkRoot + "/generated/en/calibre-server.html";
 in
 
 {
@@ -27,6 +18,14 @@ in
         in [ libraryDir ]
       )
     )
+    (mkRemovedOptionModule [ "services" "calibre-server" "user" ] ''
+      The module has been converted to use DynamicUser.
+      This option is redundant.
+    '')
+    (mkRemovedOptionModule [ "services" "calibre-server" "group" ] ''
+      The module has been converted to use DynamicUser.
+      This option is redundant.
+    '')
   ];
 
   options = {
@@ -41,20 +40,8 @@ in
         description = lib.mdDoc ''
           Make sure each library path is initialized before service startup.
           The directories of the libraries to serve. They must be readable for the user under which the server runs.
-          See the [calibredb documentation](${documentationLink}/generated/en/calibredb.html#add) for details.
+          See the [calibredb documentation](${documentationLinkRoot}/generated/en/calibredb.html#add) for details.
         '';
-      };
-
-      user = mkOption {
-        type = types.str;
-        default = "calibre-server";
-        description = lib.mdDoc "The user under which calibre-server runs.";
-      };
-
-      group = mkOption {
-        type = types.str;
-        default = "calibre-server";
-        description = lib.mdDoc "The group under which calibre-server runs.";
       };
 
       host = mkOption {
@@ -63,28 +50,26 @@ in
         example = "::1";
         description = lib.mdDoc ''
           The interface on which to listen for connections.
-          See the [calibre-server documentation](${generatedDocumentationLink}#cmdoption-calibre-server-listen-on) for details.
+          See the [calibre-server documentation](${serverCliDocumentationLink}#cmdoption-calibre-server-listen-on) for details.
         '';
       };
 
       port = mkOption {
         default = 8080;
+        example = 8081;
         type = types.port;
         description = lib.mdDoc ''
           The port on which to listen for connections.
-          See the [calibre-server documentation](${generatedDocumentationLink}#cmdoption-calibre-server-port) for details.
+          See the [calibre-server documentation](${serverCliDocumentationLink}#cmdoption-calibre-server-port) for details.
         '';
       };
 
       auth = {
-        enable = mkOption {
-          type = types.bool;
-          default = false;
-          description = lib.mdDoc ''
-            Password based authentication to access the server.
-            See the [calibre-server documentation](${generatedDocumentationLink}#cmdoption-calibre-server-enable-auth) for details.
-          '';
-        };
+        enable = mkEnableOption (lib.mdDoc ''
+          password based authentication to access the server.
+
+          See the [calibre-server documentation](${serverCliDocumentationLink}#cmdoption-calibre-server-enable-auth) for details.
+        '');
 
         mode = mkOption {
           type = types.enum [ "auto" "basic" "digest" ];
@@ -92,7 +77,7 @@ in
           description = lib.mdDoc ''
             Choose the type of authentication used.
             Set the HTTP authentication mode used by the server.
-            See the [calibre-server documentation](${generatedDocumentationLink}#cmdoption-calibre-server-auth-mode) for details.
+            See the [calibre-server documentation](${serverCliDocumentationLink}#cmdoption-calibre-server-auth-mode) for details.
           '';
         };
 
@@ -102,7 +87,7 @@ in
           description = lib.mdDoc ''
             Choose users database file to use for authentication.
             Make sure users database file is initialized before service startup.
-            See the [calibre-server documentation](${documentationLink}/server.html#managing-user-accounts-from-the-command-line-only) for details.
+            See the [calibre-server documentation](${documentationLinkRoot}/server.html#managing-user-accounts-from-the-command-line-only) for details.
           '';
         };
       };
@@ -110,36 +95,68 @@ in
   };
 
   config = mkIf cfg.enable {
-
     systemd.services.calibre-server = {
-      description = "Calibre Server";
+      description = "Server exposing calibre libraries over the internet";
+      documentation = [
+        "${documentationLinkRoot}/server.html"
+        serverCliDocumentationLink
+      ];
       after = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
-        User = cfg.user;
+        Type = "simple";
+        DynamicUser = true;
         Restart = "always";
-        ExecStart = "${cfg.package}/bin/calibre-server ${lib.concatStringsSep " " cfg.libraries} ${execFlags}";
-      };
+        ExecStart = let
+          execFlags = lib.cli.toGNUCommandLineShell { } {
+            inherit (cfg) port;
+            listen-on = cfg.host;
+            auth-mode = cfg.auth.mode;
+            userdb = cfg.auth.userDb;
+            enable-auth = cfg.auth.enable;
+          };
+        in "${cfg.package}/bin/calibre-server ${lib.concatStringsSep " " cfg.libraries} ${execFlags}";
 
+        ReadOnlyPaths = cfg.libraries;
+        ReadWritePaths = optionals (cfg.auth.enable && cfg.auth.userDb != null) cfg.userDb;
+        StateDirectory = "calibre-server";
+
+        # AmbientCapabilities = "";
+        # CapabilityBoundingSet = "";
+        # LockPersonality = true;
+        # MemoryDenyWriteExecute = true;
+        # NoNewPrivileges = true;
+        # PrivateDevices = true;
+        # PrivateMounts = true;
+        PrivateTmp = true;
+        # PrivateUsers = true;
+        # ProcSubset = "pid";
+        # ProtectClock = true;
+        # ProtectControlGroups = true;
+        # ProtectHome = true;
+        # ProtectHostname = true;
+        # ProtectKernelLogs = true;
+        # ProtectKernelModules = true;
+        # ProtectKernelTunables = true;
+        # ProtectProc = "invisible";
+        # ProtectSystem = "strict";
+        # RemoveIPC = true;
+        # RestrictAddressFamilies = [ "AF_INET" "AF_INET6" ];
+        # RestrictNamespaces = true;
+        # RestrictRealtime = true;
+        # RestrictSUIDSGID = true;
+        # SocketBindAllow = cfg.port;
+        # SocketBindDeny = "any";
+        # SystemCallArchitectures = "native";
+        # SystemCallFilter = [
+        #   "@system-service"
+        #   "~@privileged @obsolete"
+        # ];
+        # UMask = "0077";
+      };
     };
 
-    environment.systemPackages = [ pkgs.calibre ];
-
-    users.users = optionalAttrs (cfg.user == "calibre-server") {
-      calibre-server = {
-        home = "/var/lib/calibre-server";
-        createHome = true;
-        uid = config.ids.uids.calibre-server;
-        group = cfg.group;
-      };
-    };
-
-    users.groups = optionalAttrs (cfg.group == "calibre-server") {
-      calibre-server = {
-        gid = config.ids.gids.calibre-server;
-      };
-    };
-
+    environment.systemPackages = [ cfg.package ];
   };
 
   meta.maintainers = with lib.maintainers; [ gaelreyrol ];
