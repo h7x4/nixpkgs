@@ -31,8 +31,8 @@ let
     state_file          "${cfg.dataDir}/state"
     sticker_file        "${cfg.dataDir}/sticker.sql"
 
-    ${optionalString (cfg.network.listenAddress != "any") ''bind_to_address "${cfg.network.listenAddress}"''}
-    ${optionalString (cfg.network.port != 6600)  ''port "${toString cfg.network.port}"''}
+    bind_to_address "${cfg.network.listenAddress}"
+    port "${toString cfg.network.port}"
     ${optionalString (cfg.fluidsynth) ''
       decoder {
               plugin "fluidsynth"
@@ -46,20 +46,8 @@ let
   '';
 
 in {
-
-  ###### interface
-
-  options = {
-
-    services.mpd = {
-
-      enable = mkOption {
-        type = types.bool;
-        default = false;
-        description = lib.mdDoc ''
-          Whether to enable MPD, the music player daemon.
-        '';
-      };
+  options.services.mpd = {
+      enable = mkEnableOption (mdDoc "MPD, the music player daemon.");
 
       startWhenNeeded = mkOption {
         type = types.bool;
@@ -71,29 +59,52 @@ in {
         '';
       };
 
-      musicDirectory = mkOption {
-        type = with types; either path (strMatching "(http|https|nfs|smb)://.+");
-        default = "${cfg.dataDir}/music";
-        defaultText = literalExpression ''"''${dataDir}/music"'';
-        description = lib.mdDoc ''
-          The directory or NFS/SMB network share where MPD reads music from. If left
-          as the default value this directory will automatically be created before
-          the MPD server starts, otherwise the sysadmin is responsible for ensuring
-          the directory exists with appropriate ownership and permissions.
-        '';
+      settings = {
+        music_directory = mkOption {
+          type = with types; either path (strMatching "(http|https|nfs|smb)://.+");
+          default = "${cfg.dataDir}/music";
+          defaultText = literalExpression ''"''${dataDir}/music"'';
+          description = lib.mdDoc ''
+            The directory or NFS/SMB network share where MPD reads music from. If left
+            as the default value this directory will automatically be created before
+            the MPD server starts, otherwise the sysadmin is responsible for ensuring
+            the directory exists with appropriate ownership and permissions.
+          '';
+        };
+
+        playlist_directory = mkOption {
+          type = types.path;
+          default = "${cfg.dataDir}/playlists";
+          defaultText = literalExpression ''"''${dataDir}/playlists"'';
+          description = lib.mdDoc ''
+            The directory where MPD stores playlists. If left as the default value
+            this directory will automatically be created before the MPD server starts,
+            otherwise the sysadmin is responsible for ensuring the directory exists
+            with appropriate ownership and permissions.
+          '';
+        };
+
+        db_file = mkOption {
+          type = types.nullOr types.str;
+          default = "${cfg.dataDir}/tag_cache";
+          defaultText = literalExpression ''"''${dataDir}/tag_cache"'';
+          description = lib.mdDoc ''
+            The path to MPD's database. If set to `null` the
+            parameter is omitted from the configuration.
+          '';
+        };
+
+        bind_to_address = mkOption {
+          type = types.str;
+          default = "127.0.0.1";
+          example = "any";
+          description = lib.mdDoc ''
+            The address for the daemon to listen on.
+            Use `any` to listen on all addresses.
+          '';
+        };
       };
 
-      playlistDirectory = mkOption {
-        type = types.path;
-        default = "${cfg.dataDir}/playlists";
-        defaultText = literalExpression ''"''${dataDir}/playlists"'';
-        description = lib.mdDoc ''
-          The directory where MPD stores playlists. If left as the default value
-          this directory will automatically be created before the MPD server starts,
-          otherwise the sysadmin is responsible for ensuring the directory exists
-          with appropriate ownership and permissions.
-        '';
-      };
 
       extraConfig = mkOption {
         type = types.lines;
@@ -131,16 +142,6 @@ in {
 
       network = {
 
-        listenAddress = mkOption {
-          type = types.str;
-          default = "127.0.0.1";
-          example = "any";
-          description = lib.mdDoc ''
-            The address for the daemon to listen on.
-            Use `any` to listen on all addresses.
-          '';
-        };
-
         port = mkOption {
           type = types.port;
           default = 6600;
@@ -150,16 +151,6 @@ in {
           '';
         };
 
-      };
-
-      dbFile = mkOption {
-        type = types.nullOr types.str;
-        default = "${cfg.dataDir}/tag_cache";
-        defaultText = literalExpression ''"''${dataDir}/tag_cache"'';
-        description = lib.mdDoc ''
-          The path to MPD's database. If set to `null` the
-          parameter is omitted from the configuration.
-        '';
       };
 
       credentials = mkOption {
@@ -193,19 +184,8 @@ in {
         ];
       };
 
-      fluidsynth = mkOption {
-        type = types.bool;
-        default = false;
-        description = lib.mdDoc ''
-          If set, add fluidsynth soundfont and configure the plugin.
-        '';
-      };
+      fluidsynth = mkEnableOption (mdDoc "the fluidsynth plugin");
     };
-
-  };
-
-
-  ###### implementation
 
   config = mkIf cfg.enable {
 
