@@ -41501,6 +41501,8 @@ with pkgs;
 
   xsser = python3Packages.callPackage ../tools/security/xsser { };
 
+  xsstrike = python3Packages.callPackage ../tools/security/xsstrike { };
+
   xsw = callPackage ../applications/misc/xsw {
     # Enable the next line to use this in terminal.
     # Note that it requires sixel capable terminals such as mlterm
