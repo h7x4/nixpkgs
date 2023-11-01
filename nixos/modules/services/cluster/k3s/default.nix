@@ -42,7 +42,7 @@ in
     };
 
     serverAddr = mkOption {
-      type = types.str;
+      type = with types; nullOr str;
       description = lib.mdDoc ''
         The k3s server to connect to.
 
@@ -51,7 +51,7 @@ in
         to know how to configure the firewall.
       '';
       example = "https://10.0.0.10:6443";
-      default = "";
+      default = null;
     };
 
     clusterInit = mkOption {
@@ -77,14 +77,14 @@ in
     };
 
     token = mkOption {
-      type = types.str;
+      type = with types; nullOr str;
       description = lib.mdDoc ''
         The k3s token to use when connecting to a server.
 
         WARNING: This option will expose store your token unencrypted world-readable in the nix store.
         If this is undesired use the tokenFile option instead.
       '';
-      default = "";
+      default = null;
     };
 
     tokenFile = mkOption {
@@ -95,9 +95,12 @@ in
 
     extraFlags = mkOption {
       description = lib.mdDoc "Extra flags to pass to the k3s command.";
-      type = types.str;
-      default = "";
-      example = "--no-deploy traefik --cluster-cidr 10.24.0.0/16";
+      type = with types; coercedTo (listOf str) escapeShellArgs str;
+      default = [ ];
+      example = [
+        "--no-deploy traefik"
+        "--cluster-cidr 10.24.0.0/16"
+      ];
     };
 
     disableAgent = mkOption {
@@ -163,18 +166,16 @@ in
         LimitCORE = "infinity";
         TasksMax = "infinity";
         EnvironmentFile = cfg.environmentFile;
-        ExecStart = concatStringsSep " \\\n " (
-          [
-            "${cfg.package}/bin/k3s ${cfg.role}"
-          ]
-          ++ (optional cfg.clusterInit "--cluster-init")
-          ++ (optional cfg.disableAgent "--disable-agent")
-          ++ (optional (cfg.serverAddr != "") "--server ${cfg.serverAddr}")
-          ++ (optional (cfg.token != "") "--token ${cfg.token}")
-          ++ (optional (cfg.tokenFile != null) "--token-file ${cfg.tokenFile}")
-          ++ (optional (cfg.configPath != null) "--config ${cfg.configPath}")
-          ++ [ cfg.extraFlags ]
-        );
+        ExecStart = let
+          args = lib.cli.toGNUCommandLineShell { } {
+            cluster-init = cfg.clusterInit;
+            disable-agent = cfg.disableAgent;
+            server = cfg.serverAddr;
+            token = cfg.token;
+            token-file = cfg.tokenFile;
+            config = configPath;
+          };
+        in "${cfg.package}/bin/k3s ${cfg.role} ${args} ${cfg.extraFlags}";
       };
     };
   };
