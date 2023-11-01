@@ -198,6 +198,21 @@ in
                 Name of the user to ensure.
               '';
             };
+            remote = mkOption {
+              type = types.str;
+              default = "localhost";
+              example = "example.org";
+              description = lib.mdDoc ''
+                Remote of the user to ensure.
+              '';
+            };
+            passwordFile = mkOption {
+              type = types.nullOr types.path;
+              default = null;
+              description = ''
+                File containing the password of the user.
+              '';
+            };
             ensurePermissions = mkOption {
               type = types.attrsOf types.str;
               default = {};
@@ -467,9 +482,12 @@ in
 
         ${concatMapStrings (user:
           ''
-            ( echo "CREATE USER IF NOT EXISTS '${user.name}'@'localhost' IDENTIFIED WITH ${if isMariaDB then "unix_socket" else "auth_socket"};"
+            ( echo "CREATE USER IF NOT EXISTS '${user.name}'@'${user.remote}'
+                    ${optionalString (user.remote == "localhost") "IDENTIFIED WITH ${if isMariaDB then "unix_socket" else "auth_socket"}
+                    ${o}
+                    ;"
               ${concatStringsSep "\n" (mapAttrsToList (database: permission: ''
-                echo "GRANT ${permission} ON ${database} TO '${user.name}'@'localhost';"
+                echo "GRANT ${permission} ON ${database} TO '${user.name}'@'${user.remote}';"
               '') user.ensurePermissions)}
             ) | ${cfg.package}/bin/mysql -N
           '') cfg.ensureUsers}
