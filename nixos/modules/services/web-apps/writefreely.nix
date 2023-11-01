@@ -7,16 +7,7 @@ let
 
   inherit (pkgs) sqlite;
 
-  format = pkgs.formats.ini {
-    mkKeyValue = key: value:
-      let
-        value' = lib.optionalString (value != null)
-          (if builtins.isBool value then
-            if value == true then "true" else "false"
-          else
-            toString value);
-      in "${key} = ${value'}";
-  };
+  format = pkgs.formats.ini { };
 
   cfg = config.services.writefreely;
 
