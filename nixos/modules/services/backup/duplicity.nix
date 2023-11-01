@@ -164,13 +164,11 @@ in
           ProtectSystem = "strict";
           ProtectHome = "read-only";
           StateDirectory = baseNameOf stateDirectory;
-        } // optionalAttrs (localTarget != null) {
-          ReadWritePaths = localTarget;
-        } // optionalAttrs (cfg.secretFile != null) {
-          EnvironmentFile = cfg.secretFile;
+          ReadWritePaths = mkIf (localTarget != null) localTarget;
+          EnvironmentFile = mkIf (cfg.secretFile != null) cfg.secretFile;
         };
-      } // optionalAttrs (cfg.frequency != null) {
-        startAt = cfg.frequency;
+
+        startAt = mkIf (cfg.frequency != null) cfg.frequency;
       };
 
       tmpfiles.rules = optional (localTarget != null) "d ${localTarget} 0700 root root -";
