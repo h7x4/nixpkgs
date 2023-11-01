@@ -40,7 +40,7 @@ in
     extraOpts = mkOption {
       description = lib.mdDoc "Kubernetes controller manager extra command line options.";
       default = "";
-      type = separatedString " ";
+      type = coercedTo (listOf str) escapeShellArgs (separatedString " ");
     };
 
     featureGates = mkOption {
@@ -71,7 +71,7 @@ in
     securePort = mkOption {
       description = lib.mdDoc "Kubernetes controller manager secure listening port.";
       default = 10252;
-      type = int;
+      type = port;
     };
 
     serviceAccountKeyFile = mkOption {
@@ -116,29 +116,23 @@ in
         RestartSec = "30s";
         Restart = "on-failure";
         Slice = "kubernetes.slice";
-        ExecStart = ''${top.package}/bin/kube-controller-manager \
-          --allocate-node-cidrs=${boolToString cfg.allocateNodeCIDRs} \
-          --bind-address=${cfg.bindAddress} \
-          ${optionalString (cfg.clusterCidr!=null)
-            "--cluster-cidr=${cfg.clusterCidr}"} \
-          ${optionalString (cfg.featureGates != [])
-            "--feature-gates=${concatMapStringsSep "," (feature: "${feature}=true") cfg.featureGates}"} \
-          --kubeconfig=${top.lib.mkKubeConfig "kube-controller-manager" cfg.kubeconfig} \
-          --leader-elect=${boolToString cfg.leaderElect} \
-          ${optionalString (cfg.rootCaFile!=null)
-            "--root-ca-file=${cfg.rootCaFile}"} \
-          --secure-port=${toString cfg.securePort} \
-          ${optionalString (cfg.serviceAccountKeyFile!=null)
-            "--service-account-private-key-file=${cfg.serviceAccountKeyFile}"} \
-          ${optionalString (cfg.tlsCertFile!=null)
-            "--tls-cert-file=${cfg.tlsCertFile}"} \
-          ${optionalString (cfg.tlsKeyFile!=null)
-            "--tls-private-key-file=${cfg.tlsKeyFile}"} \
-          ${optionalString (elem "RBAC" top.apiserver.authorizationMode)
-            "--use-service-account-credentials"} \
-          ${optionalString (cfg.verbosity != null) "--v=${toString cfg.verbosity}"} \
-          ${cfg.extraOpts}
-        '';
+        ExecStart = let
+          args = lib.cli.toGNUCommandLineShell {
+            allocate-node-cidrs = boolToString cfg.allocateNodeCIDRs;
+            bind-address = cfg.bindAddress;
+            cluster-cidr = cfg.clusterCidr;
+            feature-gates = mkIf (featureGates != [ ]) (concatMapStringsSep "," (feature: "${feature}=true") cfg.featureGates);
+            kubeconfig = top.lib.mkKubeConfig "kube-controller-manager" cfg.kubeconfig;
+            leader-elect = boolToString cfg.leaderElect;
+            root-ca-file = cfg.rootCaFile;
+            secure-port = cfg.securePort;
+            service-account-private-key-file = cfg.serviceAccountKeyFile;
+            tls-cert-file = cfg.tlsCertFile;
+            tls-private-key-file = cfg.tlsKeyFile;
+            use-service-account-credentials = elem "RBAC" top.apiserver.authorizationMode;
+            v = cfg.verbosity;
+          };
+        in "${top.package}/bin/kube-controller-manager ${args} ${cfg.extraOpts}";
         WorkingDirectory = top.dataDir;
         User = "kubernetes";
         Group = "kubernetes";
