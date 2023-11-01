@@ -293,43 +293,36 @@ in
           MemoryAccounting = true;
           Restart = "on-failure";
           RestartSec = "1000ms";
-          ExecStart = ''${top.package}/bin/kubelet \
-            --address=${cfg.address} \
-            --authentication-token-webhook \
-            --authentication-token-webhook-cache-ttl="10s" \
-            --authorization-mode=Webhook \
-            ${optionalString (cfg.clientCaFile != null)
-              "--client-ca-file=${cfg.clientCaFile}"} \
-            ${optionalString (cfg.clusterDns != "")
-              "--cluster-dns=${cfg.clusterDns}"} \
-            ${optionalString (cfg.clusterDomain != "")
-              "--cluster-domain=${cfg.clusterDomain}"} \
-            ${optionalString (cfg.featureGates != [])
-              "--feature-gates=${concatMapStringsSep "," (feature: "${feature}=true") cfg.featureGates}"} \
-            --hairpin-mode=hairpin-veth \
-            --healthz-bind-address=${cfg.healthz.bind} \
-            --healthz-port=${toString cfg.healthz.port} \
-            --hostname-override=${cfg.hostname} \
-            --kubeconfig=${kubeconfig} \
-            ${optionalString (cfg.nodeIp != null)
-              "--node-ip=${cfg.nodeIp}"} \
-            --pod-infra-container-image=pause \
-            ${optionalString (cfg.manifests != {})
-              "--pod-manifest-path=/etc/${manifestPath}"} \
-            --port=${toString cfg.port} \
-            --register-node=${boolToString cfg.registerNode} \
-            ${optionalString (taints != "")
-              "--register-with-taints=${taints}"} \
-            --root-dir=${top.dataDir} \
-            ${optionalString (cfg.tlsCertFile != null)
-              "--tls-cert-file=${cfg.tlsCertFile}"} \
-            ${optionalString (cfg.tlsKeyFile != null)
-              "--tls-private-key-file=${cfg.tlsKeyFile}"} \
-            ${optionalString (cfg.verbosity != null) "--v=${toString cfg.verbosity}"} \
-            --container-runtime-endpoint=${cfg.containerRuntimeEndpoint} \
-            --cgroup-driver=systemd \
-            ${cfg.extraOpts}
-          '';
+          ExecStart = let
+            args = lib.cli.toGNUCommandLineShell { } {
+              address = cfg.address;
+              authentication-token-webhook = true;
+              authentication-token-webhook-cache-ttl = "10s";
+              authorization-mode = "Webhook";
+              client-ca-file = cfg.clientCaFile;
+              cluster-dns = cfg.clusterDns;
+              cluster-domain = cfg.clusterDomain;
+              feature-gates = lib.mkIf (cfg.featureGates != []) concatMapStringsSep "," (feature: "${feature}=true") cfg.featureGates;
+              hairpin-mode = "hairpin-veth";
+              healthz-bind-address = cfg.healthz.bind;
+              healthz-port = cfg.healthz.port;
+              hostname-override = cfg.hostname;
+              kubeconfig = kubeconfig;
+              node-ip = cfg.nodeIp;
+              pod-infra-container-image = "pause";
+              pod-manifest-path = "/etc/${manifestPath}";
+              port = cfg.port;
+              register-node = boolToString cfg.registerNode;
+              register-with-taints = taints;
+              root-dir = top.dataDir;
+              tls-cert-file = cfg.tlsCertFile;
+              tls-private-key-file = cfg.tlsKeyFile;
+              v =cfg.verbosity;
+              container-runtime-endpoint = cfg.containerRuntimeEndpoint;
+              cgroup-driver = "systemd";
+            };
+          in "${top.package}/bin/kubelet ${args} ${cfg.extraOpts}";
+
           WorkingDirectory = top.dataDir;
         };
         unitConfig = {
