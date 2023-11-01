@@ -677,6 +677,7 @@
   ./services/misc/headphones.nix
   ./services/misc/heisenbridge.nix
   ./services/misc/homepage-dashboard.nix
+  ./services/misc/hydrus.nix
   ./services/misc/ihaskell.nix
   ./services/misc/input-remapper.nix
   ./services/misc/irkerd.nix

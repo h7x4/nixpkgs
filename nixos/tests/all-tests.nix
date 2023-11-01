@@ -358,6 +358,7 @@ in {
   herbstluftwm = handleTest ./herbstluftwm.nix {};
   homepage-dashboard = handleTest ./homepage-dashboard.nix {};
   honk = runTest ./honk.nix;
+  hydrus = handleTest ./hydrus.nix {};
   installed-tests = pkgs.recurseIntoAttrs (handleTest ./installed-tests {});
   invidious = handleTest ./invidious.nix {};
   oci-containers = handleTestOn ["aarch64-linux" "x86_64-linux"] ./oci-containers.nix {};
