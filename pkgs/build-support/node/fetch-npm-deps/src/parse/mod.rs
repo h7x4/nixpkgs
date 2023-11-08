@@ -337,6 +337,10 @@ mod tests {
                 "git+ssh://git.sr.ht/~foo/bar#branch",
                 Some("https://git.sr.ht/~foo/bar/archive/branch.tar.gz")
             ),
+            (
+                "git+https://git.sr.ht/~cadence/nodejs-discord-markdown#abc56d544072a1dc5624adfea455b0e902adf7b3",
+                Some("https://git.sr.ht/~cadence/nodejs-discord-markdown/archive/abc56d544072a1dc5624adfea455b0e902adf7b3.tar.gz")
+            ),
         ] {
             assert_eq!(
                 get_hosted_git_url(&Url::parse(input).unwrap()).unwrap(),
