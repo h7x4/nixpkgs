@@ -1,0 +1,12 @@
+diff --git i/package-lock.json w/package-lock.json
+index 3847ee1..79a3ac0 100644
+--- i/package-lock.json
++++ w/package-lock.json
+@@ -1060,6 +1060,7 @@
+     "node_modules/discord-markdown": {
+       "version": "2.4.1",
+       "resolved": "git+https://git.sr.ht/~cadence/nodejs-discord-markdown#abc56d544072a1dc5624adfea455b0e902adf7b3",
++      "integrity": "sha512-mPjPXXNgL3prKagvj/guOzAEMcJdcr6S95u7MRlYZvsgeUiacQDQatYrJgYAf53vJw+U0JvEPUwRHZY02oX1og==",
+       "license": "MIT",
+       "dependencies": {
+         "simple-markdown": "^0.7.2"
