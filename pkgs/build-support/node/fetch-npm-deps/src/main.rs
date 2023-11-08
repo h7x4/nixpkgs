@@ -64,6 +64,8 @@ fn fixup_lockfile(
                 .ok_or_else(|| anyhow!("packages isn't a map"))?
                 .values_mut()
             {
+                println!("fixup_lockfile: {:#?}", package);
+                // println!("{:#?}\n", cache);
                 if let Some(Value::String(resolved)) = package.get("resolved") {
                     if let Some(Value::String(integrity)) = package.get("integrity") {
                         if resolved.starts_with("git+ssh://") {
@@ -240,18 +242,23 @@ fn main() -> anyhow::Result<()> {
 
     packages.into_par_iter().try_for_each(|package| {
         eprintln!("{}", package.name);
+        println!("{:#?}", &package);
 
         let tarball = package.tarball()?;
         let integrity = package.integrity().map(ToString::to_string);
 
+        println!("{:#?}", &package);
+
         cache
             .put(
                 format!("make-fetch-happen:request-cache:{}", package.url),
-                package.url,
+                package.url.clone(),
                 &tarball,
                 integrity,
             )
             .map_err(|e| anyhow!("couldn't insert cache entry for {}: {e:?}", package.name))?;
+
+        println!("{:#?}", &package);
 
         Ok::<_, anyhow::Error>(())
     })?;
