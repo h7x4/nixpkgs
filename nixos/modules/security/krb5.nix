@@ -127,4 +127,6 @@ in {
     # Put between mkBefore and default priority
     security.krb5.extraConfig = mkOrder 750 (formatToplevel cfg.settings);
   };
+
+  meta.maintainers = [ lib.maintainers.dblsaiko ];
 }
