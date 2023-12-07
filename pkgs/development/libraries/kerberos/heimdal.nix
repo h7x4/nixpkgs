@@ -30,7 +30,6 @@ stdenv.mkDerivation rec {
     "--sysconfdir=/etc"
     "--localstatedir=/var"
     "--infodir=$info/share/info"
-    "--enable-hdb-openldap-module"
     "--with-sqlite3=${sqlite.dev}"
 
   # ugly, --with-libedit is not enought, it fall back to bundled libedit
