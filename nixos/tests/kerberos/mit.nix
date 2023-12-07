@@ -11,7 +11,7 @@ import ../make-test-python.nix ({pkgs, ...}: {
     security.krb5 = {
       enable = true;
       kerberos = pkgs.krb5;
-      settings = {
+      settings.sections = {
         libdefaults = {
           default_realm = "FOO.BAR";
         };

@@ -3,7 +3,7 @@ import ../make-test-python.nix ({ pkgs, lib, ... }:
 let
   security.krb5 = {
     enable = true;
-    settings = {
+    settings.sections = {
       domain_realm."nfs.test" = "NFS.TEST";
       libdefaults.default_realm = "NFS.TEST";
       realms."NFS.TEST" = {

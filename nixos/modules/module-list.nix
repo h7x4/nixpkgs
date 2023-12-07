@@ -304,7 +304,7 @@
   ./security/duosec.nix
   ./security/google_oslogin.nix
   ./security/ipa.nix
-  ./security/krb5.nix
+  ./security/krb5
   ./security/lock-kernel-modules.nix
   ./security/misc.nix
   ./security/oath.nix
