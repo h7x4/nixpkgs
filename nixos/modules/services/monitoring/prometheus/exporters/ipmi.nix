@@ -27,15 +27,15 @@ in {
   };
 
   serviceOpts.serviceConfig = {
-    ExecStart = with cfg; concatStringsSep " " ([
+    ExecStart = concatStringsSep " " [
       "${pkgs.prometheus-ipmi-exporter}/bin/ipmi_exporter"
-      "--web.listen-address ${listenAddress}:${toString port}"
-    ] ++ optionals (cfg.webConfigFile != null) [
-      "--web.config.file ${escapeShellArg cfg.webConfigFile}"
-    ] ++ optionals (cfg.configFile != null) [
-      "--config.file ${escapeShellArg cfg.configFile}"
-    ] ++ extraFlags);
-
+      (cli.toGNUCommandLineShell { } {
+        "web.listen-address" = "${listenAddress}:${toString port}";
+        "web.config.file" = cfg.webConfigFile;
+        "config.file" = cfg.configFile;
+      })
+      (escapeShellArgs extraFlags)
+    ];
     ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
     RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
   };

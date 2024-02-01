@@ -4,7 +4,7 @@
 let
 
   inherit (lib) mkIf mkMerge;
-  inherit (lib) concatStringsSep optionalString;
+  inherit (lib) cli concatStringsSep optionalString;
 
   cfg = config.services.hylafax;
   mapModems = lib.forEach (lib.attrValues cfg.modems);
@@ -202,13 +202,15 @@ let
     wantedBy = mkIf cfg.faxqclean.enable.spoolInit requires;
     startAt = mkIf (cfg.faxqclean.enable.frequency!=null) cfg.faxqclean.enable.frequency;
     serviceConfig.ExecStart = concatStringsSep " " [
-      "${pkgs.hylafaxplus}/spool/bin/faxqclean"
-      ''-q "${cfg.spoolAreaPath}"''
-      "-v"
-      (optionalString (cfg.faxqclean.archiving!="never") "-a")
-      (optionalString (cfg.faxqclean.archiving=="always")  "-A")
-      ''-j ${toString (cfg.faxqclean.doneqMinutes*60)}''
-      ''-d ${toString (cfg.faxqclean.docqMinutes*60)}''
+      "${pkgs.hylafaxplus}/spool/bin/faxqclean "
+      (cli.toGNUCommandLineShell { } {
+        q = ${cfg.spoolAreaPath};
+        v = true;
+        a = cfg.faxqclean.archiving != "never";
+        A = cfg.faxqclean.archiving == "always";
+        j = cfg.faxqclean.doneqMinutes * 60;
+        d = cfg.faxqclean.docqMinutes * 60;
+      })
     ];
   };
 

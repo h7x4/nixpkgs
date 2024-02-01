@@ -61,15 +61,14 @@ let
         ));
 
       inherit (cfg.hbase."${name}") environment;
-      script = concatStringsSep " " (
-        [
-          "hbase --config /etc/hadoop-conf/"
-          "${toLower name} start"
-        ]
-        ++ cfg.hbase."${name}".extraFlags
-        ++ map (x: "--${toLower x} ${toString cfg.hbase.${name}.${x}}")
-          (filter (x: hasAttr x cfg.hbase.${name}) ["port" "infoPort"])
-      );
+      script = concatStringsSep " " [
+        "hbase --config /etc/hadoop-conf/ ${toLower name} start"
+        (escapeShellArgs cfg.hbase."${name}".extraFlags)
+        (cli.toGNUCommandLineShell { } {
+          port = cfg.hbase.${name}.port or null;
+          infoport = cfg.hbase.${name}.infoPort or null;
+        })
+      ];
 
       serviceConfig = {
         User = "hbase";

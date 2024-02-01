@@ -8,8 +8,8 @@ let
   cfg = config.services.wyoming.openwakeword;
 
   inherit (lib)
+    cli
     concatStringsSep
-    concatMapStringsSep
     escapeShellArgs
     mkOption
     mdDoc
@@ -102,7 +102,6 @@ in
       description = mdDoc ''
         Extra arguments to pass to the server commandline.
       '';
-      apply = escapeShellArgs;
     };
   };
 
@@ -119,15 +118,17 @@ in
         DynamicUser = true;
         User = "wyoming-openwakeword";
         # https://github.com/home-assistant/addons/blob/master/openwakeword/rootfs/etc/s6-overlay/s6-rc.d/openwakeword/run
-        ExecStart = concatStringsSep " " [
+        ExecStart = concatStringSep " " [
           "${cfg.package}/bin/wyoming-openwakeword"
-          "--uri ${cfg.uri}"
-          (concatMapStringsSep " " (model: "--preload-model ${model}") cfg.preloadModels)
-          (concatMapStringsSep " " (dir: "--custom-model-dir ${toString dir}") cfg.customModelsDirectories)
-          "--threshold ${cfg.threshold}"
-          "--trigger-level ${cfg.triggerLevel}"
-          "${cfg.extraArgs}"
+          (cli.toGNUCommandLineShell { } {
+            inherit (cfg) uri threshold;
+            trigger-level = cfg.triggerLevel;
+            preload-model = cfg.preloadModels;
+            custom-model-dir = cfg.customModelsDirectories;
+          })
+          (escapeShellArgs cfg.extraArgs)
         ];
+
         CapabilityBoundingSet = "";
         DeviceAllow = "";
         DevicePolicy = "closed";

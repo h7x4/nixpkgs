@@ -5,19 +5,6 @@ with lib;
 let
   cfg = config.services.dragonflydb;
   dragonflydb = pkgs.dragonflydb;
-
-  settings =
-    {
-      port = cfg.port;
-      dir = "/var/lib/dragonflydb";
-      keys_output_limit = cfg.keysOutputLimit;
-    } //
-    (lib.optionalAttrs (cfg.bind != null) { bind = cfg.bind; }) //
-    (lib.optionalAttrs (cfg.requirePass != null) { requirepass = cfg.requirePass; }) //
-    (lib.optionalAttrs (cfg.maxMemory != null) { maxmemory = cfg.maxMemory; }) //
-    (lib.optionalAttrs (cfg.memcachePort != null) { memcache_port = cfg.memcachePort; }) //
-    (lib.optionalAttrs (cfg.dbNum != null) { dbnum = cfg.dbNum; }) //
-    (lib.optionalAttrs (cfg.cacheMode != null) { cache_mode = cfg.cacheMode; });
 in
 {
 
@@ -120,7 +107,17 @@ in
       after = [ "network.target" ];
 
       serviceConfig = {
-        ExecStart = "${dragonflydb}/bin/dragonfly --alsologtostderr ${builtins.concatStringsSep " " (attrsets.mapAttrsToList (n: v: "--${n} ${strings.escapeShellArg v}") settings)}";
+        ExecStart = "${dragonflydb}/bin/dragonfly " + (cli.toGNUCommandLineShell { } {
+          alsologtostderr = true;
+          dir = "/var/lib/dragonflydb";
+          inherit (cfg) port bind;
+          cache_mode = cfg.cacheMode;
+          dbnum = cfg.dbNum;
+          keys_output_limit = cfg.keysOutputLimit;
+          maxmemory = cfg.maxMemory;
+          memcache_port = cfg.memcachePort;
+          requirepass = cfg.requirePass;
+        });
 
         User = cfg.user;
 

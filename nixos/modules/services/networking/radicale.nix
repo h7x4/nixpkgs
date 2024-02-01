@@ -153,11 +153,9 @@ in {
       requires = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
-        ExecStart = concatStringsSep " " ([
+        ExecStart = escapeShellArgs ([
           "${pkg}/bin/radicale" "-C" confFile
-        ] ++ (
-          map escapeShellArg cfg.extraArgs
-        ));
+        ] ++ cfg.extraArgs);
         User = "radicale";
         Group = "radicale";
         StateDirectory = "radicale/collections";

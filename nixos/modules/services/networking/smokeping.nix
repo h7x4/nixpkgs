@@ -348,15 +348,15 @@ in
       path = with pkgs; [ bash rrdtool smokeping thttpd ];
       serviceConfig = {
         Restart = "always";
-        ExecStart = lib.concatStringsSep " " (lib.concatLists [
-          [ "${pkgs.thttpd}/bin/thttpd" ]
-          [ "-u ${cfg.user}" ]
-          [ ''-c "**.fcgi"'' ]
-          [ "-d ${smokepingHome}" ]
-          (lib.optional (cfg.host != null) "-h ${cfg.host}")
-          [ "-p ${builtins.toString cfg.port}" ]
-          [ "-D -nos" ]
-        ]);
+        ExecStart = "${pkgs.thttpd}/bin/thttpd "
+          + (cli.toGNUCommandLineShell { } {
+            u = cfg.user;
+            c = "**.fcgi";
+            d = smokepingHome;
+            h = cfg.host;
+            p = cfg.port;
+            D = "-nos";
+          });
       };
     };
   };

@@ -321,11 +321,17 @@ in
 
         script = let
           tarsnap = ''${lib.getExe gcfg.package} --configfile "/etc/tarsnap/${name}.conf"'';
-          run = ''${tarsnap} -c -f "${name}-$(date +"%Y%m%d%H%M%S")" \
-                        ${optionalString cfg.verbose "-v"} \
-                        ${optionalString cfg.explicitSymlinks "-H"} \
-                        ${optionalString cfg.followSymlinks "-L"} \
-                        ${concatStringsSep " " cfg.directories}'';
+          run = concatStringsSep " " [
+            tarsnap
+            "-f ${name}-$(date +\"%Y%m%d%H%M%S\")"
+            (cli.toGNUCommandLineShell { } {
+              c = true;
+              v = cfg.verbose;
+              H = cfg.explicitSymlinks;
+              L = cfg.followSymlinks;
+            })
+            (escapeShellArgs cfg.directories)
+          ]
           cachedir = escapeShellArg cfg.cachedir;
           in if (cfg.cachedir != null) then ''
             mkdir -p ${cachedir}

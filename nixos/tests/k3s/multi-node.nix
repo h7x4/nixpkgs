@@ -54,7 +54,7 @@ import ../make-test-python.nix ({ pkgs, lib, k3s, ... }:
           role = "server";
           package = k3s;
           clusterInit = true;
-          extraFlags = builtins.toString [
+          extraFlags = lib.escapeShellArgs [
             "--disable" "coredns"
             "--disable" "local-storage"
             "--disable" "metrics-server"

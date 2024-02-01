@@ -138,31 +138,20 @@ in
 
       serviceConfig = rec {
         Type = "simple";
-        ExecStart = lib.concatStringsSep " " (
-          [
-            bin
-            (if cfg.debug then "-vvv" else "-v")
-            "--config"
-            registrationFile
-            "--listen-address"
-            (lib.escapeShellArg cfg.address)
-            "--listen-port"
-            (toString cfg.port)
-          ]
-          ++ (lib.optionals (cfg.owner != null) [
-            "--owner"
-            (lib.escapeShellArg cfg.owner)
-          ])
-          ++ (lib.optionals cfg.identd.enable [
-            "--identd"
-            "--identd-port"
-            (toString cfg.identd.port)
-          ])
-          ++ [
-            (lib.escapeShellArg cfg.homeserver)
-          ]
-          ++ (map (lib.escapeShellArg) cfg.extraArgs)
-        );
+        ExecStart = lib.concatStringsSep " " [
+          bin
+          (if cfg.debug then "-vvv" else "-v")
+          (cli.toGNUCommandLineShell { } {
+            config = registrationFile;
+            listen-address = cfg.address;
+            listen-port = cfg.port;
+            owner = cfg.owner;
+            identd = cfg.identd.enable;
+            identdPort = mkIf cfg.identd.enable cfg.identd.port;
+          });
+          (lib.escapeShellArg cfg.homeserver)
+          (lib.escapeShellArgs cfg.extraArgs)
+        ];
 
         # Hardening options
 

@@ -80,12 +80,19 @@ in
       after = [ "network.target" ];
 
       serviceConfig = {
-        ExecStart =
-        let
-          networking = if cfg.enableUnixSocket
-          then "-s /run/memcached/memcached.sock"
-          else "-l ${cfg.listen} -p ${toString cfg.port}";
-        in "${memcached}/bin/memcached ${networking} -m ${toString cfg.maxMemory} -c ${toString cfg.maxConnections} ${concatStringsSep " " cfg.extraOptions}";
+        ExecStart = escapeShellArgs ([
+          "${memcached}/bin/memcached"
+          "-m" cfg.maxMemory
+          "-c" cfg.maxConnections
+        ]
+        ++ (if cfg.enableUnixSocket then [
+          "-s" "/run/memcached/memcached.sock"
+        ] else [
+          "-l" cfg.listen
+          "-p" cfg.port
+        ])
+        ++ cfg.extraOptions
+        );
 
         User = cfg.user;
 

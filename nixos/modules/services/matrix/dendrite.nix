@@ -299,18 +299,18 @@ in
         LoadCredential = cfg.loadCredential;
         ExecStartPre = [''
           ${pkgs.envsubst}/bin/envsubst \
-            -i ${configurationYaml} \
+            -i "${configurationYaml}" \
             -o /run/dendrite/dendrite.yaml
         ''];
-        ExecStart = lib.strings.concatStringsSep " " ([
+        ExecStart = lib.escapeShellArgs ([
           "${pkgs.dendrite}/bin/dendrite"
-          "--config /run/dendrite/dendrite.yaml"
+          "--config" "/run/dendrite/dendrite.yaml"
         ] ++ lib.optionals (cfg.httpPort != null) [
-          "--http-bind-address :${builtins.toString cfg.httpPort}"
+          "--http-bind-address" ":${toString cfg.httpPort}"
         ] ++ lib.optionals (cfg.httpsPort != null) [
-          "--https-bind-address :${builtins.toString cfg.httpsPort}"
-          "--tls-cert ${cfg.tlsCert}"
-          "--tls-key ${cfg.tlsKey}"
+          "--https-bind-address" ":${toString cfg.httpsPort}"
+          "--tls-cert" "${cfg.tlsCert}"
+          "--tls-key" "${cfg.tlsKey}"
         ] ++ lib.optionals cfg.openRegistration [
           "--really-enable-open-registration"
         ]);

@@ -179,20 +179,21 @@ in {
 
       script = let
         receiverCommand = postgresqlPackage:
-         if (versionAtLeast postgresqlPackage.version "10")
-           then "${postgresqlPackage}/bin/pg_receivewal"
-           else "${postgresqlPackage}/bin/pg_receivexlog";
-      in ''
-        ${receiverCommand config.postgresqlPackage} \
-          --no-password \
-          --directory=${escapeShellArg config.directory} \
-          --status-interval=${toString config.statusInterval} \
-          --dbname=${escapeShellArg config.connection} \
-          ${optionalString (config.compress > 0) "--compress=${toString config.compress}"} \
-          ${optionalString (config.slot != "") "--slot=${escapeShellArg config.slot}"} \
-          ${optionalString config.synchronous "--synchronous"} \
-          ${concatStringsSep " " config.extraArgs}
-      '';
+         if (versionAtLeast config.postgresqlPackage.version "10")
+           then "${config.postgresqlPackage}/bin/pg_receivewal"
+           else "${config.postgresqlPackage}/bin/pg_receivexlog";
+      in concatStringsSep " " [
+        receiverCommand
+        (cli.toGNUCommandLineShell { } {
+          inherit (config) directory synchronous;
+          no-password = true;
+          status-interval = config.statusInterval;
+          dbname = config.connection;
+          compress = mkIf (config.compress > 0) config.compress;
+          slot = mkIf (config.slot != "") config.slot;
+        })
+        (escapeShellArgs config.extraArgs)
+     ];
     }) receivers;
   };
 

@@ -105,13 +105,12 @@ in {
         ExecStartPre = ''
           /bin/sh -c "${pkgs.jq}/bin/jq -s '.[0] * .[1]' ${configFile} ${cfg.secretsConfigFile} > ${mergedConfigFile}"
         '';
-        ExecStart = lib.concatStringsSep " " [
+        ExecStart = escapeShellArgs ([
           "${cfg.package}/bin/zwave-server"
-          "--config ${mergedConfigFile}"
-          "--port ${toString cfg.port}"
+          "--config" mergedConfigFile
+          "--port" cfg.port
           cfg.serialPort
-          (escapeShellArgs cfg.extraFlags)
-        ];
+        ] ++ cfg.extraFlags);
         Restart = "on-failure";
         User = "zwave-js";
         SupplementaryGroups = [ "dialout" ];

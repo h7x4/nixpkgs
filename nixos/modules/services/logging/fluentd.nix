@@ -5,7 +5,7 @@ with lib;
 let
   cfg = config.services.fluentd;
 
-  pluginArgs = concatStringsSep " " (map (x: "-p ${x}") cfg.plugins);
+  pluginArgs = escapeShellArgs (concatMap (x: ["-p" x]) cfg.plugins);
 in {
   ###### interface
 

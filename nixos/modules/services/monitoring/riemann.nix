@@ -17,9 +17,9 @@ let
 
   launcher = writeScriptBin "riemann" ''
     #!/bin/sh
-    exec ${jdk}/bin/java ${concatStringsSep " " cfg.extraJavaOpts} \
-      -cp ${classpath} \
-      riemann.bin ${cfg.configFile}
+    exec ${jdk}/bin/java ${escapeShellArgs cfg.extraJavaOpts} \
+      -cp "${classpath}" \
+      riemann.bin "${cfg.configFile}"
   '';
 
 in {

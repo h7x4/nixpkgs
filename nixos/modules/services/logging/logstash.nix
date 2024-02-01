@@ -5,7 +5,6 @@ with lib;
 let
   cfg = config.services.logstash;
   ops = lib.optionalString;
-  verbosityFlag = "--log.level " + cfg.logLevel;
 
   logstashConf = pkgs.writeText "logstash.conf" ''
     input {
@@ -174,15 +173,15 @@ in
       path = [ pkgs.bash ];
       serviceConfig = {
         ExecStartPre = ''${pkgs.coreutils}/bin/mkdir -p "${cfg.dataDir}" ; ${pkgs.coreutils}/bin/chmod 700 "${cfg.dataDir}"'';
-        ExecStart = concatStringsSep " " (filter (s: stringLength s != 0) [
+        ExecStart = escapeShellArgs [
           "${cfg.package}/bin/logstash"
-          "-w ${toString cfg.filterWorkers}"
+          "-w" cfg.filterWorkers
           (concatMapStringsSep " " (x: "--path.plugins ${x}") cfg.plugins)
-          "${verbosityFlag}"
-          "-f ${logstashConf}"
-          "--path.settings ${logstashSettingsDir}"
-          "--path.data ${cfg.dataDir}"
-        ]);
+          "--log.level" cfg.logLevel
+          "-f" logstashConf
+          "--path.settings" logstashSettingsDir
+          "--path.data" cfg.dataDir
+        ];
       };
     };
   };

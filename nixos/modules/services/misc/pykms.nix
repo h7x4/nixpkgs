@@ -72,7 +72,7 @@ in
         DynamicUser = true;
         StateDirectory = baseNameOf libDir;
         ExecStartPre = "${getBin pykms}/libexec/create_pykms_db.sh ${libDir}/clients.db";
-        ExecStart = lib.concatStringsSep " " ([
+        ExecStart = escapeShellArgs ([
           "${getBin pykms}/bin/server"
           "--logfile=STDOUT"
           "--loglevel=${cfg.logLevel}"
