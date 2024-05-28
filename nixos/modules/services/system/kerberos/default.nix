@@ -43,6 +43,7 @@ in
         };
 
         realm = {
+          freeformType = format.sectionType;
           options = {
             acl = mkOption {
               type = types.listOf (types.submodule aclEntry);
