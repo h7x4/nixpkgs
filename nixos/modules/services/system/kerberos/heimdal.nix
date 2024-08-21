@@ -8,8 +8,10 @@ let
   aclConfigs = lib.pipe cfg.settings.realms [
     (mapAttrs (name: { acl, ... }: lib.concatMapStringsSep "\n" (
       { principal, access, target, ... }:
-      "${principal}\t${lib.concatStringsSep "," (lib.toList access)}"
-      # "${principal}\t${lib.concatStringsSep "," (lib.toList access)}\t${target}"
+      if target != "*" && target != null then
+        "${principal}\t${lib.concatStringsSep "," (lib.toList access)}\t${target}"
+      else
+        "${principal}\t${lib.concatStringsSep "," (lib.toList access)}"
     ) acl))
     (lib.mapAttrsToList (name: text:
       {
@@ -74,7 +76,7 @@ in
         "info:heimdal"
       ];
       serviceConfig = {
-        ExecStart = "${package}/libexec/kadmind --config-file=/etc/heimdal-kdc/kdc.conf";
+        ExecStart = "${lib.getExe pkgs.strace} ${package}/libexec/kadmind --config-file=/etc/heimdal-kdc/kdc.conf";
         Slice = "system-kerberos-server.slice";
         StateDirectory = "heimdal";
       };

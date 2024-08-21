@@ -13,6 +13,8 @@ import ../make-test-python.nix ({ pkgs, lib, ... }: {
       services.resolved.enable = false;
       services.resolved.fallbackDns = [ ];
 
+      time.timeZone = "Etc/UTC";
+
       networking = {
         domain = "foo.bar";
 
@@ -103,6 +105,8 @@ import ../make-test-python.nix ({ pkgs, lib, ... }: {
       users.users.alice.extraGroups = [ "wheel" ];
       environment.systemPackages = with pkgs; [ neovim nmap ripgrep ];
 
+      time.timeZone = "Etc/UTC";
+
       networking = {
         domain = "foo.bar";
 
@@ -177,7 +181,7 @@ import ../make-test-python.nix ({ pkgs, lib, ... }: {
       server.send_chars("foobar\n")
       server.wait_until_tty_matches("1", "alice/admin@FOO.BAR's Password:")
       server.send_chars("alice_admin_pw\n")
-      server.wait_for_console_text("MODIFY host/server.foo.bar@FOO.BAR")
+      server.wait_for_file("/etc/krb5.keytab")
 
       ktutil_list = server.succeed("sudo ktutil list")
       if not "host/server.foo.bar" in ktutil_list:
@@ -201,7 +205,7 @@ import ../make-test-python.nix ({ pkgs, lib, ... }: {
       client.send_chars("foobar\n")
       client.wait_until_tty_matches("1", "alice/admin@FOO.BAR's Password:")
       client.send_chars("alice_admin_pw\n")
-      server.wait_for_console_text("MODIFY host/client.foo.bar@FOO.BAR")
+      client.wait_for_file("/etc/krb5.keytab")
 
       ktutil_list = client.succeed("sudo ktutil list")
       if not "host/client.foo.bar" in ktutil_list:
