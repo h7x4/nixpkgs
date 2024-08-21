@@ -21,8 +21,10 @@ let
           target,
           ...
         }:
+      if target != "*" && target != null then
+        "${principal}\t${lib.concatStringsSep "," (lib.toList access)}\t${target}"
+      else
         "${principal}\t${lib.concatStringsSep "," (lib.toList access)}"
-        # "${principal}\t${lib.concatStringsSep "," (lib.toList access)}\t${target}"
       ) acl
     ))
     (lib.mapAttrsToList (
@@ -90,7 +92,7 @@ in
         "info:heimdal"
       ];
       serviceConfig = {
-        ExecStart = "${package}/libexec/kadmind --config-file=/etc/heimdal-kdc/kdc.conf";
+        ExecStart = "${lib.getExe pkgs.strace} ${package}/libexec/kadmind --config-file=/etc/heimdal-kdc/kdc.conf";
         Slice = "system-kerberos-server.slice";
         StateDirectory = "heimdal";
       };
