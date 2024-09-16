@@ -61,11 +61,17 @@ let
 
   # Handle assertions and warnings
 
-  failedAssertions = map (x: x.message) (filter (x: !x.assertion) config.assertions);
+  failedAssertions = let
+    assertions = lib.collect' (x: builtins.isAttrs x && x ? message && !(x.assertion or true) && (x.enable or false)) config.assertions;
+  in map (x: "assertions." + (lib.concatStringsSep "." x.path) + ":\n" + x.value.message) assertions;
+
+  failedWarnings = let
+    warnings = lib.collect' (x: builtins.isAttrs x && x ? message && (x.condition or false) && (x.enable or false)) config.warnings;
+  in map (x: "warnings." (lib.concatStringsSep "." x.path) + ":\n" + x.value.message) warnings;
 
   baseSystemAssertWarn = if failedAssertions != []
     then throw "\nFailed assertions:\n${concatStringsSep "\n" (map (x: "- ${x}") failedAssertions)}"
-    else showWarnings config.warnings baseSystem;
+    else showWarnings failedWarnings baseSystem;
 
   # Replace runtime dependencies
   system = foldr ({ oldDependency, newDependency }: drv:
