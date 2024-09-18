@@ -3,7 +3,6 @@ let
   cfg = config.services.go-neb;
 
   settingsFormat = pkgs.formats.yaml {};
-  configFile = settingsFormat.generate "config.yaml" cfg.config;
 in {
   options.services.go-neb = {
     enable = lib.mkEnableOption "an extensible matrix bot written in Go";
@@ -43,26 +42,24 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    systemd.services.go-neb = let
-      finalConfigFile = if cfg.secretFile == null then configFile else "/var/run/go-neb/config.yaml";
-    in {
+    systemd.services.go-neb = {
       description = "Extensible matrix bot written in Go";
       after = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
       environment = {
         BASE_URL = cfg.baseUrl;
         BIND_ADDRESS = cfg.bindAddress;
-        CONFIG_FILE = finalConfigFile;
+        CONFIG_FILE = "/run/go-neb/config.yaml";
       };
 
+      preStart = let
+        configFile = settingsFormat.generate "config.yaml" cfg.config;
+      in ''
+        umask 077
+        ${pkgs.envsubst}/bin/envsubst -i "${configFile}" -o /run/go-neb/config.yaml
+      '';
       serviceConfig = {
-        ExecStartPre = lib.optional (cfg.secretFile != null)
-          ("+" + pkgs.writeShellScript "pre-start" ''
-            umask 077
-            export $(xargs < ${cfg.secretFile})
-            ${pkgs.envsubst}/bin/envsubst -i "${configFile}" > ${finalConfigFile}
-            chown go-neb ${finalConfigFile}
-          '');
+        EnvironmentFile = lib.optional (cfg.secretFile != null) cfg.secretFile;
         RuntimeDirectory = "go-neb";
         ExecStart = "${pkgs.go-neb}/bin/go-neb";
         User = "go-neb";

@@ -4,8 +4,6 @@ with lib;
 
 let
   cfg = config.services.powerdns;
-  configDir = pkgs.writeTextDir "pdns.conf" "${cfg.extraConfig}";
-  finalConfigDir = if cfg.secretFile == null then configDir else "/run/pdns";
 in {
   options = {
     services.powerdns = {
@@ -46,14 +44,15 @@ in {
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" "mysql.service" "postgresql.service" "openldap.service" ];
 
+      preStart = let
+        configDir = pkgs.writeTextDir "pdns.conf" cfg.extraConfig;
+      in ''
+        umask 077
+        ${pkgs.envsubst}/bin/envsubst -i "${configDir}/pdns.conf" -o /run/pdns/pdns.conf
+      '';
       serviceConfig = {
         EnvironmentFile = lib.optional (cfg.secretFile != null) cfg.secretFile;
-        ExecStartPre = lib.optional (cfg.secretFile != null)
-          (pkgs.writeShellScript "pdns-pre-start" ''
-            umask 077
-            ${pkgs.envsubst}/bin/envsubst -i "${configDir}/pdns.conf" > ${finalConfigDir}/pdns.conf
-          '');
-        ExecStart = [ "" "${pkgs.pdns}/bin/pdns_server --config-dir=${finalConfigDir} --guardian=no --daemon=no --disable-syslog --log-timestamp=no --write-pid=no" ];
+        ExecStart = [ "" "${pkgs.pdns}/bin/pdns_server --config-dir=/run/pdns --guardian=no --daemon=no --disable-syslog --log-timestamp=no --write-pid=no" ];
       };
     };
 
