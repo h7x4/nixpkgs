@@ -7,11 +7,8 @@ let
       p = p.name;
       v = p.deviceUri;
       m = p.model;
-    } // lib.optionalAttrs (p.location != null) {
       L = p.location;
-    } // lib.optionalAttrs (p.description != null) {
       D = p.description;
-    } // lib.optionalAttrs (p.ppdOptions != {}) {
       o = lib.mapAttrsToList (name: value: "${name}=${value}") p.ppdOptions;
     });
   in ''
