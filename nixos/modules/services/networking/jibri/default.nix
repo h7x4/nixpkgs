@@ -308,6 +308,10 @@ in
       extraGroups = [ "jitsi-meet" "adm" "audio" "video" "plugdev" ];
     };
 
+    systemd.slices.system-jibri = {
+      description = "Common slice for all jibri services";
+    };
+
     systemd.services.jibri-xorg = {
       description = "Jitsi Xorg Process";
 
@@ -328,6 +332,7 @@ in
         KillMode = "process";
         Restart = "on-failure";
         RestartPreventExitStatus = 255;
+        Slice = "system-jibri.slice";
 
         StateDirectory = "jibri";
 
@@ -350,6 +355,7 @@ in
         Group = "jibri";
         Restart = "on-failure";
         RestartPreventExitStatus = 255;
+        Slice = "system-jibri.slice";
 
         StateDirectory = "jibri";
 
@@ -385,6 +391,7 @@ in
         Group = "jibri";
         Restart = "always";
         RestartPreventExitStatus = 255;
+        Slice = "system-jibri.slice";
 
         StateDirectory = "jibri";
       };
