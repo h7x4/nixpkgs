@@ -23,6 +23,11 @@ stdenv.mkDerivation rec {
   buildInputs = with kdePackages; [ qtbase qtcharts qtsvg ];
   nativeBuildInputs = [ cmake kdePackages.wrapQtAppsHook ];
 
+  postInstall = ''
+    install -Dm444 "$src/src/resources/seergdb_256x256.png" "$out/share/icons/hicolor/256x256/apps/seergdb.png"
+    install -Dm444 "$src/src/resources/seergdb.desktop" -t "$out/share/applications"
+  '';
+
   meta = with lib; {
     description = "Qt gui frontend for GDB";
     mainProgram = "seergdb";
