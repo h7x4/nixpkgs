@@ -4,6 +4,8 @@
 , lib
 , makeWrapper
 , stdenv
+, copyDesktopItems
+, makeDesktopItem
 }:
 stdenv.mkDerivation {
   pname = "hexgui";
@@ -16,15 +18,36 @@ stdenv.mkDerivation {
     hash = "sha256-yEdZs9HUt3lcrdNO1OH8M8g71+2Ltf+v1RR1fKRDV0o=";
   };
 
-  nativeBuildInputs = [ ant jdk makeWrapper ];
+  desktopItems = [
+    (makeDesktopItem {
+      name = "hexgui";
+      exec = "hexgui";
+      icon = "hexgui";
+      comment = "GUI for board game hex";
+      desktopName = "HexGui";
+      genericName = "GUI for board game hex";
+      categories = [ "Game" ];
+    })
+  ];
+
+  nativeBuildInputs = [ ant jdk makeWrapper copyDesktopItems ];
   buildPhase = ''
+    runHook preBuild
+
     ant
+
+    runHook postBuild
   '';
 
   installPhase = ''
+    runHook preInstall
+
     mkdir $out
     mv bin lib $out
     wrapProgram $out/bin/hexgui --prefix PATH : ${lib.makeBinPath [ jdk ]}
+    install -Dm444 src/hexgui/images/hexgui.svg -t "$out/share/icons/hicolor/scalable/apps"
+
+    runHook postInstall
   '';
 
   meta = {
