@@ -1,4 +1,13 @@
-{ lib, stdenv, fetchurl, coreutils, fltk, libjpeg }:
+{
+  lib,
+  stdenv,
+  fetchurl,
+  coreutils,
+  fltk,
+  libjpeg,
+  copyDesktopItems,
+  makeDesktopItem,
+}:
 
 stdenv.mkDerivation rec {
   version = "5.0.5";
@@ -9,10 +18,30 @@ stdenv.mkDerivation rec {
     sha256 = "sha256-zo9emLpHiDv6kekbx55NOibxWN2Zg7XngzGkUqSx+PI=";
   };
 
+  nativeBuildInputs = [ copyDesktopItems ];
   buildInputs = [ fltk libjpeg ];
 
   patchPhase = "sed -i 's#PATH=/bin:/usr/bin rm#'${coreutils}/bin/rm'#' seaview.cxx";
-  installPhase = "mkdir -p $out/bin; cp seaview $out/bin";
+  installPhase = ''
+    runHook preInstall
+
+    install -Dm555 seaview -t "$out/bin"
+    install -Dm444 seaview.svg -t "$out/share/icons/hicolor/scalable/apps"
+
+    runHook postInstall
+  '';
+
+  desktopItems = [
+    (makeDesktopItem {
+      name = "seaview";
+      exec = "seaview";
+      icon = "seaview";
+      comment = "GUI for molecular phylogeny";
+      desktopName = "SeaView";
+      genericName = "GUI for molecular phylogeny";
+      categories = [ "Science" ];
+    })
+  ];
 
   meta = with lib; {
     description = "GUI for molecular phylogeny";
