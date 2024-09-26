@@ -12,6 +12,8 @@
 , ncurses
 , openssl
 , which
+, makeDesktopItem
+, copyDesktopItems
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -26,6 +28,7 @@ stdenv.mkDerivation (finalAttrs: {
   };
 
   nativeBuildInputs = [
+    copyDesktopItems
     which
   ];
 
@@ -61,12 +64,31 @@ stdenv.mkDerivation (finalAttrs: {
     "--enable-visualmem"
   ];
 
+  desktopItems = [
+    (makeDesktopItem {
+      name = "zesarux";
+      genericName = "Emulator";
+      desktopName = "ZEsarUX";
+      exec = "zesarux";
+      icon = "zesarux";
+      comment = finalAttrs.meta.description;
+      categories = [
+        "Game"
+      ];
+      startupWMClass = "ZEsarUX";
+      terminal = false;
+    })
+  ];
+
+
   installPhase = ''
     runHook preInstall
 
     ./generate_install_sh.sh
     patchShebangs ./install.sh
     ./install.sh
+
+    install -Dm444 zesarux_256.png "$out/share/icons/hicolor/256x256/apps/zesarux.png"
 
     runHook postInstall
   '';
