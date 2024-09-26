@@ -74,7 +74,7 @@ python3Packages.buildPythonApplication rec {
     mkdir -p $out/share/OneDriveGUI
     # we do not need the `ui` directory - only resources
     cp -r src/resources $out/share/OneDriveGUI
-    install -Dm444 -t $/out/share/icons/hicolor/48x48/apps src/resources/images/OneDriveGUI.png
+    install -Dm444 -t $out/share/icons/hicolor/48x48/apps src/resources/images/OneDriveGUI.png
     # we put our own executable wrapper in place instead
     rm -r $out/bin/*
 
