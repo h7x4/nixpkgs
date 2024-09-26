@@ -3,6 +3,8 @@
 , fetchFromGitHub
 , electron
 , makeWrapper
+, copyDesktopItems
+, makeDesktopItem
 }:
 
 buildNpmPackage rec {
@@ -26,11 +28,28 @@ buildNpmPackage rec {
 
   npmBuildScript = "build:prod";
 
-  nativeBuildInputs = [ makeWrapper ];
+  nativeBuildInputs = [
+    copyDesktopItems
+    makeWrapper
+  ];
+
+  desktopItems = [
+    (makeDesktopItem {
+      name = "uivonim";
+      exec = "uivonim %U";
+      icon = "uivonim";
+      desktopName = "Uivonim";
+      genericName = "Editor";
+      categories = [ "Development" ];
+      type = "Application";
+    })
+  ];
 
   postInstall = ''
     makeWrapper ${electron}/bin/electron $out/bin/uivonim \
       --add-flags $out/lib/node_modules/uivonim/build/main/main.js
+
+    install -Dm444 art/icon.png "$out/share/icons/hicolor/512x512/apps/uivonim.png"
   '';
 
   meta = with lib; {
