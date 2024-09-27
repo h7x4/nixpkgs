@@ -1508,7 +1508,7 @@ in
             # place the interface which is named after the device at the beginning.
             wlanListDeviceFirst = device: interfaces:
               if hasAttr device interfaces
-              then mapAttrsToList (n: v: v//{_iName=n;}) (filterAttrs (n: _: n==device) interfaces) ++ mapAttrsToList (n: v: v//{_iName=n;}) (filterAttrs (n: _: n!=device) interfaces)
+              then [(interfaces.${device} // {_iName=device;})] ++ mapAttrsToList (n: v: v//{_iName=n;}) removeAttrs interfaces [device]
               else mapAttrsToList (n: v: v // {_iName = n;}) interfaces;
 
             # Udev script to execute for the default WLAN interface with the persistend udev name.

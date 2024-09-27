@@ -39,7 +39,7 @@ buildPythonPackage rec {
     code_syntax_highlighting = [ pygments ];
     wavedrom = [ wavedrom ];
     all = lib.flatten (
-      lib.attrValues (lib.filterAttrs (n: v: n != "all") passthru.optional-dependencies)
+      lib.attrValues (lib.removeAttrs passthru.optional-dependencies ["all"])
     );
   };
 

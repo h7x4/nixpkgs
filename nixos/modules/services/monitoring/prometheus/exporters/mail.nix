@@ -9,6 +9,7 @@ let
     nameValuePair
     toLower
     filterAttrs
+    removeAttrs
     escapeShellArg
     literalExpression
     mkIf
@@ -26,7 +27,7 @@ let
           (filterAttrs (n: v: !(n == "_module" || v == null)) srv)
         ))) value)
       else nameValuePair (toLower name) value
-    ) (filterAttrs (n: _: !(n == "_module")) cfg.configuration)
+    ) (removeAttrs cfg.configuration ["_module"]);
   ));
 
   serverOptions.options = {
