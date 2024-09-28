@@ -40,7 +40,7 @@ in
       ${lib.concatStringsSep "\n" (lib.mapAttrsToList (kernelName: unfilteredKernel:
         let
           allowedKernelKeys = ["argv" "displayName" "language" "interruptMode" "env" "metadata" "logo32" "logo64" "extraPaths"];
-          kernel = lib.filterAttrs (n: v: (lib.any (x: x == n) allowedKernelKeys)) unfilteredKernel;
+          kernel = lib.getAttrs allowedKernelKeys unfilteredKernel;
           config = builtins.toJSON (
             kernel
             // {display_name = if (kernel.displayName != "") then kernel.displayName else kernelName;}

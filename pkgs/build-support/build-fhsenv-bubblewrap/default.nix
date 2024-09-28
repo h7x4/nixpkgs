@@ -44,7 +44,7 @@ let
   name = args.name or "${args.pname}-${args.version}";
   executableName = args.pname or args.name;
   # we don't know which have been supplied, and want to avoid defaulting missing attrs to null. Passed into runCommandLocal
-  nameAttrs = lib.filterAttrs (key: value: builtins.elem key [ "name" "pname" "version" ]) args;
+  nameAttrs = lib.getAttrs [ "name" "pname" "version" ] args;
 
   buildFHSEnv = callPackage ./buildFHSEnv.nix { };
 

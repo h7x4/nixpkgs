@@ -8,7 +8,7 @@
 { config, lib, ... }:
 let
   inherit (lib)
-    filterAttrs
+    getAttrs
     literalExpression
     mapAttrsToList
     mkDefault
@@ -71,9 +71,7 @@ in
                 {
                   type = "path";
                   path = config.flake.outPath;
-                } // filterAttrs
-                  (n: _: n == "lastModified" || n == "rev" || n == "revCount" || n == "narHash")
-                  config.flake
+                } // getAttrs [ "lastModified" "rev" "revCount" "narHash" ] config.flake
               ));
             };
           }

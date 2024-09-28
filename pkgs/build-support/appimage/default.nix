@@ -58,7 +58,7 @@ rec {
   wrapType2 = args@{ src, extraPkgs ? pkgs: [ ], ... }: wrapAppImage
     (args // {
       inherit extraPkgs;
-      src = extract (lib.filterAttrs (key: value: builtins.elem key [ "name" "pname" "version" "src" ]) args);
+      src = extract (lib.getAttrs [ "name" "pname" "version" "src" ] args);
 
       # passthru src to make nix-update work
       # hack to keep the origin position (unsafeGetAttrPos)
