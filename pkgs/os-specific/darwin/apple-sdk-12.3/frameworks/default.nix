@@ -134,7 +134,7 @@ let
           # Add dependencies from addToFrameworks.
           (deps: lib.recursiveUpdate deps (addToFrameworks.${name} or { }))
           # Keep dependencies not in removeFromFrameworks.
-          (lib.filterAttrs (depName: _: !(removeFromFrameworks.${name}.${depName} or false)))
+          (lib.flip lib.removeAttrs (lib.attrNames removeFromFrameworks.${name}))
         ];
     in
     lib.mapAttrs fixupDeps public-frameworks;
