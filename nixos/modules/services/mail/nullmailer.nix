@@ -193,7 +193,7 @@
       etc = let
         validAttrs = lib.mapAttrs (_: toString) (lib.filterAttrs (_: value: value != null) cfg.config);
       in
-        (lib.foldl' (as: name: as // { "nullmailer/${name}".text = validAttrs.${name}; }) {} (lib.attrNames validAttrs))
+        lib.mapAttrs' (name: value: lib.nameValuePair "nullmailer/${name}" { text = value; }) validAttrs
           // lib.optionalAttrs (cfg.remotesFile != null) { "nullmailer/remotes".source = cfg.remotesFile; };
     };
 
