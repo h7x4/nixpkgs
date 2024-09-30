@@ -303,7 +303,7 @@ in {
 
   config = lib.mkMerge [
     (lib.mkIf (enabledInstances != {}) {
-      assertions = lib.mkMerge (lib.attrValues (lib.mapAttrs (name: cfg: [
+      assertions = lib.mkMerge (lib.mapAttrsToList (name: cfg: [
         {
           assertion = cfg.settings.homeserver.domain != "" && cfg.settings.homeserver.address != "";
           message = ''
@@ -338,7 +338,7 @@ in {
             The option `services.mautrix-meta.instances.${name}.settings.appservice.bot.username` has to be set.
           '';
         }
-      ]) enabledInstances));
+      ]) enabledInstances);
 
       users.users = lib.mapAttrs' (name: cfg: lib.nameValuePair "mautrix-meta-${name}" {
         isSystemUser = true;
