@@ -9,7 +9,7 @@ let
 in
 stdenv.mkDerivation {
   name = "androidenv-test-suite";
-  buidInputs = lib.mapAttrsToList (name: value: value) all-tests;
+  buidInputs = lib.attrValues all-tests;
 
   buildCommand = ''
     touch $out
