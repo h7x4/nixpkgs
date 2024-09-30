@@ -1100,7 +1100,7 @@ in
     boot.initrd.preLVMCommands = mkIf (!config.boot.initrd.systemd.enable) (commonFunctions + preCommands + concatStrings (mapAttrsToList openCommand preLVM) + postCommands);
     boot.initrd.postDeviceCommands = mkIf (!config.boot.initrd.systemd.enable) (commonFunctions + preCommands + concatStrings (mapAttrsToList openCommand postLVM) + postCommands);
 
-    boot.initrd.systemd.services = let devicesWithClevis = filterAttrs (device: _: (hasAttr device clevis.devices)) luks.devices; in
+    boot.initrd.systemd.services = let devicesWithClevis = removeAttrs luks.devices (attrNames clevis.devices); in
       mkIf (clevis.enable && systemd.enable) (
         (mapAttrs'
           (name: _: nameValuePair "cryptsetup-clevis-${name}" {
