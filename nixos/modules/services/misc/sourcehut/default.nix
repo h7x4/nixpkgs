@@ -3,7 +3,7 @@
 let
   inherit (builtins) head tail;
   inherit (lib) generators maintainers types;
-  inherit (lib.attrsets) attrValues filterAttrs mapAttrs mapAttrsToList recursiveUpdate;
+  inherit (lib.attrsets) attrValues filterAttrs getAttrs mapAttrs mapAttrsToList recursiveUpdate;
   inherit (lib.lists) flatten optional optionals;
   inherit (lib.options) literalExpression mkEnableOption mkOption mkPackageOption;
   inherit (lib.strings) concatMapStringsSep concatStringsSep optionalString versionOlder;
@@ -777,8 +777,7 @@ in
       };
       environment.etc."ssh/sourcehut/config.ini".source =
         settingsFormat.generate "sourcehut-dispatch-config.ini"
-          (filterAttrs (k: v: k == "git.sr.ht::dispatch")
-          cfg.settings);
+          (getAttrs [ "git.sr.ht::dispatch" ] cfg.settings);
       environment.etc."ssh/sourcehut/subdir/srht-dispatch" = {
         # sshd_config(5): The program must be owned by root, not writable by group or others
         mode = "0755";
