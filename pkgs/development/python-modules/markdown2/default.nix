@@ -38,7 +38,7 @@ buildPythonPackage rec {
   optional-dependencies = {
     code_syntax_highlighting = [ pygments ];
     wavedrom = [ wavedrom ];
-    all = lib.flatten (lib.attrValues (lib.filterAttrs (n: v: n != "all") optional-dependencies));
+    all = lib.flatten (lib.attrValues (lib.removeAttrs optional-dependencies ["all"]));
   };
 
   meta = with lib; {
