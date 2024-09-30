@@ -16,7 +16,7 @@ let
   # interfaces that are part of a bridge, bond or sit device.
   ignoredInterfaces =
     map (i: i.name) (lib.filter (i: if i.useDHCP != null then !i.useDHCP else i.ipv4.addresses != [ ]) interfaces)
-    ++ lib.mapAttrsToList (i: _: i) config.networking.sits
+    ++ lib.attrNames config.networking.sits
     ++ lib.concatLists (lib.attrValues (lib.mapAttrs (n: v: v.interfaces) config.networking.bridges))
     ++ lib.flatten (lib.concatMap (i: lib.attrNames (lib.filterAttrs (_: config: config.type != "internal") i.interfaces)) (lib.attrValues config.networking.vswitches))
     ++ lib.concatLists (lib.attrValues (lib.mapAttrs (n: v: v.interfaces) config.networking.bonds))
