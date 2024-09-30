@@ -206,7 +206,7 @@ in
         after = [ "network.target" ];
 
         script = ''
-          ${lib.concatStringsSep "\n" (lib.attrValues (lib.mapAttrs (name: path: ''export ${name}="$(< ${lib.escapeShellArg path})"'') cfg.environmentFiles))}
+          ${lib.concatStringsSep "\n" (lib.mapAttrsToList (name: path: ''export ${name}="$(< ${lib.escapeShellArg path})"'') cfg.environmentFiles)}
           exec ${pkgs.patroni}/bin/patroni ${configFile}
         '';
 
