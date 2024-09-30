@@ -100,8 +100,8 @@ in {
         xkb = optionals cfg.useXkbConfig
           (lib.mapAttrsToList (n: v: "xkb-${n}=${v}") (
             lib.filterAttrs
-              (n: v: builtins.elem n ["layout" "model" "options" "variant"] && v != "")
-              config.services.xserver.xkb
+              (_: v: v != "")
+              (lib.getAttrs ["layout" "model" "options" "variant"] config.services.xserver.xkb)
           ));
         render = optionals cfg.hwRender [ "drm" "hwaccel" ];
         fonts = optional (cfg.fonts != null) "font-name=${lib.concatMapStringsSep ", " (f: f.name) cfg.fonts}";
