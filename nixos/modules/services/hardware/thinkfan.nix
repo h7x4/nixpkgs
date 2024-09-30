@@ -76,7 +76,7 @@ let
 
   # removes NixOS special and unused attributes
   sensorToConf = { type, query, ... }@args:
-    (lib.filterAttrs (k: v: v != null && !(lib.elem k ["type" "query"])) args)
+    (lib.filterAttrs (k: v: v != null) (lib.removeAttrs ["type" "query"] args))
     // { "${type}" = query; };
 
   syntaxNote = name: ''
