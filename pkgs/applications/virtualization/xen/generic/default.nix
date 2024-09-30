@@ -165,7 +165,7 @@ let
 
   # Gets a list containing the names of the top-level attribute for each pre-fetched
   # source, to be used in the map functions below.
-  prefetchedSourcesList = lib.attrsets.mapAttrsToList (name: value: name) prefetchedSources;
+  prefetchedSourcesList = lib.attrsets.attrNames prefetchedSources;
 
   # Produces bash commands that will copy each pre-fetched source.
   copyPrefetchedSources =
