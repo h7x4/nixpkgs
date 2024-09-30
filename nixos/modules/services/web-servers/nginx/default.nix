@@ -5,7 +5,7 @@ with lib;
 let
   cfg = config.services.nginx;
   inherit (config.security.acme) certs;
-  vhostsConfigs = mapAttrsToList (vhostName: vhostConfig: vhostConfig) virtualHosts;
+  vhostsConfigs = attrValues virtualHosts;
   acmeEnabledVhosts = filter (vhostConfig: vhostConfig.enableACME || vhostConfig.useACMEHost != null) vhostsConfigs;
   dependentCertNames = unique (map (hostOpts: hostOpts.certName) acmeEnabledVhosts);
   virtualHosts = mapAttrs (vhostName: vhostConfig:
