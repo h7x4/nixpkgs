@@ -8,24 +8,18 @@ let
 
       # NOTE(@connorbaker): We MUST use `lib` from `prev` because the attribute
       # names CAN NOT depend on `final`.
-      inherit (prev.lib.attrsets) filterAttrs mapAttrs;
-      inherit (prev.lib.trivial) pipe;
+      inherit (prev.lib.attrsets) attrNames getAttrs mapAttrs;
 
       # NOTE: Filter out attributes that are not present in the previous version of
       # the package set. This is necessary to prevent the appearance of attributes
       # like `cuda_nvcc` in `cudaPackages_10_0, which predates redistributables.
-      filterOutNewAttrs = filterAttrs (name: _: prev ? ${name});
-
+      newAttrs = getAttrs (attrNames prev) createOverrideAttrs;
+    in
       # Apply callPackage to each attribute value, yielding a value to be passed
       # to overrideAttrs.
-      callPackageThenOverrideAttrs = mapAttrs (
+      mapAttrs (
         name: value: prev.${name}.overrideAttrs (callPackage value { })
-      );
-    in
-    pipe createOverrideAttrs [
-      filterOutNewAttrs
-      callPackageThenOverrideAttrs
-    ];
+      ) newAttrs;
 in
 # Each attribute name is the name of an existing package in the previous version
 # of the package set.
