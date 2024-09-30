@@ -42,7 +42,7 @@
   hardened = let
     mkPatch = kernelVersion: { version, sha256, patch }: let src = patch; in {
       name = lib.removeSuffix ".patch" src.name;
-      patch = fetchurl (lib.filterAttrs (k: v: k != "extra") src);
+      patch = fetchurl (lib.removeAttrs src ["extra"]);
       extra = src.extra;
       inherit version sha256;
     };
