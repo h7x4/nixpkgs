@@ -80,7 +80,7 @@ let
   };
 
   mailOption =
-    lib.optionalString (lib.foldr (n: a: a || (n.mail or false) != false) false (lib.attrValues cfg.settings))
+    lib.optionalString (lib.any (n: (n.mail or false) != false) (lib.attrValues cfg.settings))
     "--mail=${pkgs.mailutils}/bin/mail";
 in
 {
@@ -93,7 +93,7 @@ in
   options = {
     services.logrotate = {
       enable = lib.mkEnableOption "the logrotate systemd service" // {
-        default = lib.foldr (n: a: a || n.enable) false (lib.attrValues cfg.settings);
+        default = lib.any (n: n.enable) (lib.attrValues cfg.settings);
         defaultText = lib.literalExpression "cfg.settings != {}";
       };
 

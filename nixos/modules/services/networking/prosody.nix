@@ -797,10 +797,7 @@ in
         } ++ optional (cfg.httpFileShare != null) {
           url = cfg.httpFileShare.domain; description = "HTTP file share endpoint";
         };
-        mucDiscoItems = builtins.foldl'
-            (acc: muc: [{ url = muc.domain; description = "${muc.domain} MUC endpoint";}] ++ acc)
-            []
-            cfg.muc;
+        mucDiscoItems = map (muc: { url = muc.domain; description = "${muc.domain} MUC endpoint";}) cfg.muc;
         discoItems = cfg.disco_items ++ httpDiscoItems ++ mucDiscoItems;
       in ''
 
