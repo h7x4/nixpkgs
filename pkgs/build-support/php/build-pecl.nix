@@ -21,13 +21,7 @@
     {
       url = "https://pecl.php.net/get/${pname}-${version}.tgz";
     }
-    // lib.filterAttrs (
-      attrName: _:
-      lib.elem attrName [
-        "sha256"
-        "hash"
-      ]
-    ) args
+    // (lib.getAttrs [ "sha256" "hash" ] args)
   ),
   passthru ? { },
   ...
