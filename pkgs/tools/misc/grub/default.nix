@@ -39,8 +39,8 @@ let
     riscv64-linux.target = "riscv64";
   };
 
-  canEfi = lib.any (system: stdenv.hostPlatform.system == system) (lib.mapAttrsToList (name: _: name) efiSystemsBuild);
-  inPCSystems = lib.any (system: stdenv.hostPlatform.system == system) (lib.mapAttrsToList (name: _: name) pcSystems);
+  canEfi = lib.hasAttr stdenv.hostPlatform.system efiSystemsBuild;
+  inPCSystems = lib.hasAttr stdenv.hostPlatform.system pcSystems;
 
   gnulib = fetchFromSavannah {
     repo = "gnulib";
