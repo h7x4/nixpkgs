@@ -45,7 +45,7 @@ let
       "--prefix" "PYTHONPATH" ":" "${mpv.vapoursynth}/${mpv.vapoursynth.python3.sitePackages}"
     ] ++ lib.optionals (binPath != "") [
       "--prefix" "PATH" ":" binPath
-    ] ++ (lib.lists.flatten (map
+    ] ++ (lib.lists.concatMap
       # For every script in the `scripts` argument, add the necessary flags to the wrapper
       (script:
         [
@@ -57,7 +57,7 @@ let
         # scripts can also set the `extraWrapperArgs` passthru
         ++ (script.extraWrapperArgs or [])
       ) scripts
-    )) ++ extraMakeWrapperArgs)
+    ) ++ extraMakeWrapperArgs)
     ;
     umpvWrapperArgs = lib.strings.escapeShellArgs ([
       "--inherit-argv0"
