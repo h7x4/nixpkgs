@@ -107,7 +107,7 @@ mkDerivation rec {
 
   nativeBuildInputs = [ cmake pkg-config qttools ];
 
-  cmakeFlags = lib.flatten (map (e: map (f: fstat e.enable f) e.names) options);
+  cmakeFlags = lib.concatMap (e: map (f: fstat e.enable f) e.names) options;
 
   meta = with lib; {
     description = "Graphical client for MPD";
