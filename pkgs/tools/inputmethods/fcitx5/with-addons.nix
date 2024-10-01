@@ -29,7 +29,7 @@ symlinkJoin {
       --prefix FCITX_ADDON_DIRS : "$out/lib/fcitx5" \
       --suffix XDG_DATA_DIRS : "$out/share" \
       --suffix PATH : "$out/bin" \
-      --suffix LD_LIBRARY_PATH : "${lib.makeLibraryPath (lib.flatten (map (x: x.extraLdLibraries or []) addons))}"
+      --suffix LD_LIBRARY_PATH : "${lib.makeLibraryPath (lib.concatMap (x: x.extraLdLibraries or []) addons)}"
 
     ${lib.optionalString withConfigtool ''
       # Configtool call libexec/fcitx5-qt5-gui-wrapper for gui addons in FCITX_ADDON_DIRS
