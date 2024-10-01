@@ -16,7 +16,7 @@ infoFile:
 let
   info = lib.importJSON infoFile;
 
-  dependencies = lib.flatten (map (dep:
+  dependencies = lib.concatMap (dep:
     let
       inherit (dep) sha1 groupId artifactId version metadata repository-id;
       versionDir = dep.unresolved-version or version;
@@ -49,7 +49,7 @@ let
           fetch.name
         }";
       drv = fetch;
-    })) info.dependencies);
+    })) info.dependencies;
 
   repo = linkFarm "maven-repository" (lib.forEach dependencies (dependency: {
     name = dependency.layout;
