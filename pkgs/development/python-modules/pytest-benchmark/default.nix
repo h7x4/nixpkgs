@@ -70,7 +70,7 @@ buildPythonPackage rec {
     mercurial
     pytestCheckHook
     pytest-xdist
-  ] ++ lib.flatten (lib.attrValues optional-dependencies);
+  ] ++ lib.concatLists (lib.attrValues optional-dependencies);
 
   pytestFlagsArray = [
     "-W"

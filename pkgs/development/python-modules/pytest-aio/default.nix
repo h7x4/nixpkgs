@@ -43,7 +43,7 @@ buildPythonPackage rec {
     hypothesis
     pytestCheckHook
     trio-asyncio
-  ] ++ lib.flatten (lib.attrValues optional-dependencies);
+  ] ++ lib.concatLists (lib.attrValues optional-dependencies);
 
   pythonImportsCheck = [ "pytest_aio" ];
 

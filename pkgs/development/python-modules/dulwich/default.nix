@@ -68,7 +68,7 @@ buildPythonPackage rec {
       glibcLocales
       unittestCheckHook
     ]
-    ++ lib.flatten (lib.attrValues optional-dependencies);
+    ++ lib.concatLists (lib.attrValues optional-dependencies);
 
   preCheck = ''
     # requires swift config file

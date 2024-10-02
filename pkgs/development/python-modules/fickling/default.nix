@@ -39,7 +39,7 @@ buildPythonPackage rec {
     ];
   };
 
-  nativeCheckInputs = [ pytestCheckHook ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  nativeCheckInputs = [ pytestCheckHook ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   pythonImportsCheck = [ "fickling" ];
 

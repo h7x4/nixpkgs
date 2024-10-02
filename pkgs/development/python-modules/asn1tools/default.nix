@@ -41,7 +41,7 @@ buildPythonPackage rec {
   nativeCheckInputs = [
     pytest-xdist
     pytestCheckHook
-  ] ++ lib.flatten (builtins.attrValues passthru.optional-depdendencies);
+  ] ++ lib.concatLists (builtins.attrValues passthru.optional-depdendencies);
 
   pythonImportsCheck = [ "asn1tools" ];
 

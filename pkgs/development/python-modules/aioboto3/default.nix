@@ -53,7 +53,7 @@ buildPythonPackage rec {
     pytest-asyncio
     pytestCheckHook
     requests
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   pythonImportsCheck = [ "aioboto3" ];
 

@@ -183,7 +183,7 @@ let
         pytest-xdist
         pytestCheckHook
       ]
-      ++ lib.flatten (lib.attrValues optional-dependencies)
+      ++ lib.concatLists (lib.attrValues optional-dependencies)
       ++ lib.optionals (stdenv.hostPlatform.isLinux) [
         # for locale executable
         glibc

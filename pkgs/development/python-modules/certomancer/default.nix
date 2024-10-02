@@ -73,7 +73,7 @@ buildPythonPackage rec {
     pytestCheckHook
     pytz
     requests
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   disabledTests = [
     # pyhanko_certvalidator.errors.DisallowedAlgorithmError

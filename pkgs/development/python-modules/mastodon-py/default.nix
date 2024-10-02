@@ -58,7 +58,7 @@ buildPythonPackage rec {
     pytest-vcr
     requests-mock
     setuptools
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   disabledTests = [
     "test_notifications_dismiss_pre_2_9_2"

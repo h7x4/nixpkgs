@@ -73,7 +73,7 @@ buildPythonPackage rec {
   nativeCheckInputs = [
     pytestCheckHook
     torchvision
-  ] ++ lib.flatten (lib.attrValues optional-dependencies);
+  ] ++ lib.concatLists (lib.attrValues optional-dependencies);
 
   disabledTests = [
     # network access

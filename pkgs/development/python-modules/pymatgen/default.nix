@@ -78,7 +78,7 @@ buildPythonPackage rec {
   nativeCheckInputs = [
     pytestCheckHook
     pytest-xdist
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   preCheck = ''
     # ensure tests can find these

@@ -199,7 +199,7 @@ python.pkgs.buildPythonApplication rec {
     pytest-xdist
     pytestCheckHook
     responses
-  ] ++ lib.flatten (lib.attrValues optional-dependencies);
+  ] ++ lib.concatLists (lib.attrValues optional-dependencies);
 
   disabledTests = [
     # tries to run npm run i18n:extract

@@ -59,7 +59,7 @@ buildPythonPackage rec {
   nativeCheckInputs = [
     intake-parquet
     pytestCheckHook
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   optional-dependencies = {
     server = [

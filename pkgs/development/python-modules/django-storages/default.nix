@@ -50,7 +50,7 @@ buildPythonPackage rec {
     moto
     pytestCheckHook
     rsa
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   pythonImportsCheck = [ "storages" ];
 

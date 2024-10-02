@@ -71,7 +71,7 @@ buildPythonPackage rec {
     pillow
     pytestCheckHook
     pytest-django
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   disabledTests = [
     # Tests require network access

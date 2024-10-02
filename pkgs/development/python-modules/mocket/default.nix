@@ -72,7 +72,7 @@ buildPythonPackage rec {
       sure
     ]
     ++ lib.optionals (pythonOlder "3.12") [ aiohttp ]
-    ++ lib.flatten (builtins.attrValues optional-dependencies);
+    ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   preCheck = lib.optionalString stdenv.hostPlatform.isLinux ''
     ${redis-server}/bin/redis-server &

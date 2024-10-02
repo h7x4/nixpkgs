@@ -46,7 +46,7 @@ buildPythonPackage rec {
     mock
     pytestCheckHook
     requests
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   pythonImportsCheck = [ "cachecontrol" ];
 

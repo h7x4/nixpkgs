@@ -40,7 +40,7 @@ buildPythonPackage rec {
   nativeCheckInputs = [
     pytestCheckHook
     webtest
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   meta = with lib; {
     changelog = "https://github.com/rmohr/static3/releases/tag/v${version}";

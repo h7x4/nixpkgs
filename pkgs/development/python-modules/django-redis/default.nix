@@ -67,7 +67,7 @@ buildPythonPackage rec {
     pytest-django
     pytest-mock
     pytestCheckHook
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   pytestFlagsArray = [
     "-W"

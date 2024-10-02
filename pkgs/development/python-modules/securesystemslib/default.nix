@@ -70,7 +70,7 @@ buildPythonPackage rec {
   nativeCheckInputs = [
     ed25519
     pytestCheckHook
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   pythonImportsCheck = [ "securesystemslib" ];
 

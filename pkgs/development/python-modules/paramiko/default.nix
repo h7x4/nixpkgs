@@ -62,7 +62,7 @@ buildPythonPackage rec {
     icecream
     mock
     pytestCheckHook
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   disabledTestPaths = [
     # disable tests that require pytest-relaxed, which is broken

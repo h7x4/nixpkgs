@@ -93,7 +93,7 @@ python.pkgs.buildPythonApplication rec {
     syrupy
     pytest-timeout
   ]
-  ++ lib.flatten (lib.attrValues optional-dependencies);
+  ++ lib.concatLists (lib.attrValues optional-dependencies);
 
   pytestFlagsArray = [
     # blocks in setup

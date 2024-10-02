@@ -138,7 +138,7 @@ python3.pkgs.buildPythonApplication rec {
     mock
     parameterized
   ])
-  ++ lib.flatten (lib.attrValues optional-dependencies);
+  ++ lib.concatLists (lib.attrValues optional-dependencies);
 
   doCheck = !stdenv.hostPlatform.isDarwin;
 

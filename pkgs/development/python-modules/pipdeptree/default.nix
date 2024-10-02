@@ -47,7 +47,7 @@ buildPythonPackage rec {
     pytest-mock
     pytestCheckHook
     virtualenv
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   pythonImportsCheck = [ "pipdeptree" ];
 

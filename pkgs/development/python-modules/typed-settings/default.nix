@@ -57,7 +57,7 @@ buildPythonPackage rec {
     hypothesis
     pytestCheckHook
     typing-extensions
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   pytestFlagsArray = [ "tests" ];
 

@@ -52,7 +52,7 @@ buildPythonPackage rec {
     pytestCheckHook
     which
     yosys
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   pythonImportsCheck = [ "edalize" ];
 

@@ -53,7 +53,7 @@ buildPythonPackage rec {
     pyyaml
     pytest-django
     pytestCheckHook
-  ] ++ lib.flatten (lib.attrValues optional-dependencies);
+  ] ++ lib.concatLists (lib.attrValues optional-dependencies);
 
   disabledTestPaths = [
     # requires django-filters

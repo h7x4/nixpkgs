@@ -178,7 +178,7 @@ buildPythonPackage rec {
     pytest-mock
     pytest-asyncio
     factory-boy
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   disabledTestPaths = [ "tests/server/datasets/test_dao.py" ];
 

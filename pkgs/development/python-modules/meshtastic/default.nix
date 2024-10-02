@@ -84,7 +84,7 @@ buildPythonPackage rec {
     hypothesis
     pytestCheckHook
     riden
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   preCheck = ''
     export PATH="$PATH:$out/bin";

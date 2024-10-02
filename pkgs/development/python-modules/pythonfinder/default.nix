@@ -41,7 +41,7 @@ buildPythonPackage rec {
   nativeCheckInputs = [
     pytest-timeout
     pytestCheckHook
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   pythonImportsCheck = [ "pythonfinder" ];
 

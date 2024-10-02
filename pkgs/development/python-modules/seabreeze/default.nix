@@ -77,7 +77,7 @@ buildPythonPackage rec {
     pytestCheckHook
     mock
     zipp
-  ] ++ lib.flatten (lib.attrValues optional-dependencies);
+  ] ++ lib.concatLists (lib.attrValues optional-dependencies);
 
   disabledTests = [ "TestHardware" ];
 

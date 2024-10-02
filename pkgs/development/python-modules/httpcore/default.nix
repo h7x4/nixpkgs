@@ -59,7 +59,7 @@ buildPythonPackage rec {
     pytest-httpbin
     pytest-trio
     pytestCheckHook
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   pythonImportsCheck = [ "httpcore" ];
 

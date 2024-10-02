@@ -60,7 +60,7 @@ buildPythonPackage rec {
     pyspark
     unittestCheckHook
     warcio
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   unittestFlagsArray = [ "-v" ];
 

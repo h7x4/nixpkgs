@@ -69,7 +69,7 @@ let
         pytestCheckHook
         yapf
       ])
-      ++ lib.flatten (lib.attrValues optional-dependencies)
+      ++ lib.concatLists (lib.attrValues optional-dependencies)
       ++ [ versionCheckHook ];
 
     disabledTests = [

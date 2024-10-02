@@ -67,7 +67,7 @@ buildPythonPackage rec {
     faker
     pytest-aiohttp
     pytestCheckHook
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   pythonImportsCheck = [ "aiohttp_client_cache" ];
 

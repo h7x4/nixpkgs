@@ -41,7 +41,7 @@ buildPythonPackage rec {
 
   optional-dependencies.crypto = [ cryptography ];
 
-  nativeCheckInputs = [ pytestCheckHook ] ++ (lib.flatten (lib.attrValues optional-dependencies));
+  nativeCheckInputs = [ pytestCheckHook ] ++ (lib.concatLists (lib.attrValues optional-dependencies));
 
   disabledTests = [
     # requires internet connection

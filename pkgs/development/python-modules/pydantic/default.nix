@@ -65,7 +65,7 @@ buildPythonPackage rec {
       pytestCheckHook
       rich
     ]
-    ++ lib.flatten (lib.attrValues optional-dependencies)
+    ++ lib.concatLists (lib.attrValues optional-dependencies)
     ++ lib.optionals (pythonOlder "3.10") [ eval-type-backport ];
 
   preCheck = ''

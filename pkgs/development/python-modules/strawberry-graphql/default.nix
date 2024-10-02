@@ -146,7 +146,7 @@ buildPythonPackage rec {
     pytest-snapshot
     pytestCheckHook
     sanic-testing
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   pythonImportsCheck = [ "strawberry" ];
 

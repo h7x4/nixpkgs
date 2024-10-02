@@ -71,7 +71,7 @@ buildPythonPackage rec {
   nativeCheckInputs = [
     pytestCheckHook
     parameterized
-  ] ++ lib.flatten (lib.attrValues optional-dependencies);
+  ] ++ lib.concatLists (lib.attrValues optional-dependencies);
 
   pytestFlagsArray = [
     "-W"

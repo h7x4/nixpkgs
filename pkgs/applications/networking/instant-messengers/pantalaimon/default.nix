@@ -59,7 +59,7 @@ python3Packages.buildPythonApplication rec {
     pytest-aiohttp
     pytestCheckHook
   ]
-  ++ lib.flatten (lib.attrValues optional-dependencies);
+  ++ lib.concatLists (lib.attrValues optional-dependencies);
 
   nativeBuildInputs = lib.optionals enableDbusUi [
     wrapGAppsHook3

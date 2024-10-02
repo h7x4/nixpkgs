@@ -93,7 +93,7 @@ buildPythonPackage rec {
   nativeCheckInputs = [
     glibcLocales
     pytestCheckHook
-  ] ++ lib.flatten (lib.attrValues optional-dependencies);
+  ] ++ lib.concatLists (lib.attrValues optional-dependencies);
 
   disabledTests = [
     # https://github.com/rhasspy/gruut/issues/25

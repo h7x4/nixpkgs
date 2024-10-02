@@ -95,7 +95,7 @@ buildPythonPackage rec {
     pytestCheckHook
     setuptools
     tomli
-  ] ++ lib.flatten (lib.attrValues optional-dependencies);
+  ] ++ lib.concatLists (lib.attrValues optional-dependencies);
 
   disabledTests =
     [

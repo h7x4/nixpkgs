@@ -67,7 +67,7 @@ buildPythonPackage rec {
     moto
     pytestCheckHook
     responses
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   pytestFlagsArray = [ "smart_open" ];
 

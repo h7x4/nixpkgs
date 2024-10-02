@@ -56,7 +56,7 @@ buildPythonPackage rec {
     pytestCheckHook
     trio
     typing-extensions
-  ] ++ lib.flatten (lib.attrValues optional-dependencies);
+  ] ++ lib.concatLists (lib.attrValues optional-dependencies);
 
   pytestFlagsArray = [
     "-W"

@@ -51,7 +51,7 @@ buildPythonPackage rec {
     setuptools
     twine
     webtest
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   __darwinAllowLocalNetworking = true;
 

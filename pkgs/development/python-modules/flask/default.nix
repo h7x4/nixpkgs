@@ -58,7 +58,7 @@ buildPythonPackage rec {
   nativeCheckInputs =
     [ pytestCheckHook ]
     ++ lib.optionals (pythonOlder "3.11") [ greenlet ]
-    ++ lib.flatten (builtins.attrValues optional-dependencies);
+    ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   passthru.tests = {
     inherit

@@ -58,7 +58,7 @@ buildPythonPackage rec {
     pytestCheckHook
     uvicorn
     simple-websocket
-  ] ++ lib.flatten (lib.attrValues optional-dependencies);
+  ] ++ lib.concatLists (lib.attrValues optional-dependencies);
 
   pythonImportsCheck = [ "socketio" ];
 

@@ -116,7 +116,7 @@ buildPythonPackage rec {
     selenium
     tblib
     tzdata
-  ] ++ lib.flatten (lib.attrValues optional-dependencies);
+  ] ++ lib.concatLists (lib.attrValues optional-dependencies);
 
   doCheck = !stdenv.hostPlatform.isDarwin;
 

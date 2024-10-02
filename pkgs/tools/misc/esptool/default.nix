@@ -46,7 +46,7 @@ python3Packages.buildPythonApplication rec {
     pyelftools
     pytestCheckHook
     softhsm
-  ] ++ lib.flatten (lib.attrValues optional-dependencies);
+  ] ++ lib.concatLists (lib.attrValues optional-dependencies);
 
   # tests mentioned in `.github/workflows/test_esptool.yml`
   checkPhase = ''

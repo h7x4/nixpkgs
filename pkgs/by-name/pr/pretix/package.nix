@@ -234,7 +234,7 @@ python.pkgs.buildPythonApplication rec {
     freezegun
     fakeredis
     responses
-  ] ++ lib.flatten (lib.attrValues optional-dependencies);
+  ] ++ lib.concatLists (lib.attrValues optional-dependencies);
 
   pytestFlagsArray = [
     "--reruns" "3"

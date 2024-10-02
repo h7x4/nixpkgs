@@ -46,7 +46,7 @@ buildPythonPackage rec {
     psycopg2
     pymysql
     pytestCheckHook
-  ] ++ lib.flatten (lib.attrValues optional-dependencies);
+  ] ++ lib.concatLists (lib.attrValues optional-dependencies);
 
   preCheck = ''
     # Indicate tests that we don't have a database server at hand

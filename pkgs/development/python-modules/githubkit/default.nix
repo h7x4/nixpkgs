@@ -59,7 +59,7 @@ buildPythonPackage rec {
     pytestCheckHook
     pytest-cov-stub
     pytest-xdist
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   pythonImportsCheck = [ "githubkit" ];
 

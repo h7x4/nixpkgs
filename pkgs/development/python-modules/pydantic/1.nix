@@ -45,7 +45,7 @@ buildPythonPackage rec {
   nativeCheckInputs = [
     pytest-mock
     pytest7CheckHook
-  ] ++ lib.flatten (lib.attrValues optional-dependencies);
+  ] ++ lib.concatLists (lib.attrValues optional-dependencies);
 
   pytestFlagsArray = [
     # https://github.com/pydantic/pydantic/issues/4817

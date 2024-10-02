@@ -86,7 +86,7 @@ buildPythonPackage rec {
     pytestCheckHook
     python-pae
     requests-mock
-  ] ++ lib.flatten (lib.attrValues optional-dependencies);
+  ] ++ lib.concatLists (lib.attrValues optional-dependencies);
 
   disabledTestPaths = [
     # ModuleNotFoundError: No module named 'csc_dummy'

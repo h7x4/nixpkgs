@@ -83,7 +83,7 @@ buildPythonPackage rec {
     fsspec
     psutil
     pytestCheckHook
-  ] ++ fsspec.optional-dependencies.github ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ fsspec.optional-dependencies.github ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   pytestFlagsArray = [ "-m 'not needs_internet'" ];
 

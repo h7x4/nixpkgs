@@ -47,7 +47,7 @@ buildPythonPackage rec {
     pytest-asyncio
     pytestCheckHook
     respx
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   pythonImportsCheck = [ "sfrbox_api" ];
 

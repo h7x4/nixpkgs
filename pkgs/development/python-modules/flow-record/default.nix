@@ -45,7 +45,7 @@ buildPythonPackage rec {
 
   nativeCheckInputs = [
     pytest7CheckHook
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   pythonImportsCheck = [ "flow.record" ];
 

@@ -52,7 +52,7 @@ buildPythonPackage rec {
   nativeCheckInputs = [
     pytest-cov
     pytestCheckHook
-  ] ++ lib.flatten (lib.attrValues optional-dependencies);
+  ] ++ lib.concatLists (lib.attrValues optional-dependencies);
 
   pythonImportsCheck = [ "schwifty" ];
 

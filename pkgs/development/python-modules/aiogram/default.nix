@@ -72,7 +72,7 @@ buildPythonPackage rec {
     pytest-lazy-fixture
     pytestCheckHook
     pytz
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   pytestFlagsArray = [
     "-W"

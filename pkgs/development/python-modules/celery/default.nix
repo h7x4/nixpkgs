@@ -71,7 +71,7 @@ buildPythonPackage rec {
     pytest-timeout
     pytest-xdist
     pytestCheckHook
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   disabledTestPaths = [
     # test_eventlet touches network

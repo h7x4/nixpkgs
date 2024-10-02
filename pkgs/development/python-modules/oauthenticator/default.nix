@@ -57,7 +57,7 @@ buildPythonPackage rec {
     pytest-cov-stub
     pytestCheckHook
     requests-mock
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   disabledTests = [
     # Tests are outdated, https://github.com/jupyterhub/oauthenticator/issues/432

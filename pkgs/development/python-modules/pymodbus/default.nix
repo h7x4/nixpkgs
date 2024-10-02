@@ -57,7 +57,7 @@ buildPythonPackage rec {
     redis
     sqlalchemy
     twisted
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   preCheck = ''
     pushd test

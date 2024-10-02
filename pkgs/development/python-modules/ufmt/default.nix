@@ -51,7 +51,7 @@ buildPythonPackage rec {
 
   nativeCheckInputs = [
     unittestCheckHook
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   pythonImportsCheck = [ "ufmt" ];
 

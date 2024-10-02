@@ -118,7 +118,7 @@ buildPythonPackage rec {
     pytest-asyncio
     pytestCheckHook
     tomlkit
-  ] ++ lib.flatten (builtins.attrValues optional-dependencies);
+  ] ++ lib.concatLists (builtins.attrValues optional-dependencies);
 
   pythonImportsCheck = [ "kserve" ];
 

@@ -36,7 +36,7 @@ python3Packages.buildPythonApplication rec {
     setuptools
     wxpython
   ]
-  ++ lib.flatten (lib.attrValues optional-dependencies);
+  ++ lib.concatLists (lib.attrValues optional-dependencies);
 
   optional-dependencies = with python3Packages; {
     cam = [
