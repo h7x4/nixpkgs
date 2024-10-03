@@ -3,7 +3,7 @@
   options = {
     assertions = lib.mkOption {
       type = let
-        assertionItemType = lib.types.submodule {
+        assertionItemType = lib.types.submodule ({ config, ... }: {
           options = {
             enable = lib.mkOption {
               description = ''
@@ -25,11 +25,28 @@
 
             message = lib.mkOption {
               description = "The contents of the error message that should be shown upon triggering a false assertion";
-              type = lib.types.nonEmptyStr;
+              type = if config.lazy then lib.types.unspecified else lib.types.nonEmptyStr;
               example = "This is an example error message";
             };
+
+            lazy = lib.mkOption {
+              description = ''
+                Whether to avoid evaluating the message contents until the assertion condition occurs.
+
+                This will also disable typechecking.
+
+                ::: {.note}
+                We do not recommend you enable this. It is mostly intended for backwards compatibility.
+                If you do need to enable it, make sure to double check that your `message` always will
+                evaluate successfully whenever the assertion would trigger.
+                :::
+              '';
+              type = lib.types.bool;
+              default = false;
+              example = true;
+            };
           };
-        };
+        });
 
         # This might be replaced when tagged submodules or similar are available,
         # see https://github.com/NixOS/nixpkgs/pull/254790
@@ -50,7 +67,7 @@
         # The attribute name will be set to the sha256 sum of the assertion message, e.g. `assertions.legacy."<sha256>" = { ... }`
         coercedAssertionAttrs = let
           coerce = xs: {
-            legacy = lib.listToAttrs (map (assertion: lib.nameValuePair (builtins.hashString "sha256" assertion.message) assertion) xs);
+            legacy = lib.listToAttrs (lib.imap0 (i: assertion: lib.nameValuePair "anon-${toString i}" (assertion // { lazy = true; })) xs);
           };
         in with lib.types; coercedTo (listOf (attrsOf unspecified)) coerce (submodule { freeformType = nestedAssertionAttrsType; });
       in coercedAssertionAttrs;

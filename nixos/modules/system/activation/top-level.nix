@@ -61,12 +61,31 @@ let
 
   # Handle assertions and warnings
 
+  collectUntil = let
+    collectUntil' =
+      path:
+      pred:
+      dontProceedPred:
+      value:
+      if pred value then
+        [ { inherit path value; } ]
+      else if dontProceedPred value then
+        [ ]
+      else if isAttrs value then
+        concatMap ({ name, value }: collectUntil' (path ++ [ name ]) pred dontProceedPred value) (attrsToList value)
+      else
+        [];
+  in collectUntil' [];
+
   failedAssertions = let
-    assertions = lib.collect' (x: builtins.isAttrs x && x ? message && !(x.assertion or true) && (x.enable or false)) config.assertions;
+    assertions = collectUntil
+      (x: builtins.isAttrs x && !(x.assertion or true) && (x.enable or false) && x ? message)
+      (x: builtins.isAttrs x && (x.lazy or false))
+      config.assertions;
   in map (x: "assertions." + (lib.concatStringsSep "." x.path) + ":\n" + x.value.message) assertions;
 
   failedWarnings = let
-    warnings = lib.collect' (x: builtins.isAttrs x && x ? message && (x.condition or false) && (x.enable or false)) config.warnings;
+    warnings = lib.collect' (x: builtins.isAttrs x && (x.condition or false) && (x.enable or false) && x ? message) config.warnings;
   in map (x: "warnings." (lib.concatStringsSep "." x.path) + ":\n" + x.value.message) warnings;
 
   baseSystemAssertWarn = if failedAssertions != []
