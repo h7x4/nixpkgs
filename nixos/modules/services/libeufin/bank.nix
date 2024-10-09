@@ -5,15 +5,32 @@
   pkgs,
   ...
 }:
+# let
+#   libeufinUtils = import ./utils.nix { inherit lib pkgs config; };
+# in
+{
+  imports = [(import ./common.nix "bank")];
 
-let
-  libeufinUtils = import ./utils.nix { inherit lib pkgs config; };
-in
+  options.services.libeufin.bank = {
+    enable = lib.mkEnableOption "libeufin core banking system and web interface";
+    package = lib.mkPackageOption pkgs "libeufin" { };
+    debug = lib.mkEnableOption "debug logging";
+    openFirewall = lib.mkEnableOption "Open ports in the firewall";
 
-libeufinUtils.mkLibeufinModule {
-  libeufinComponent = "bank";
+    initialAccounts = lib.mkOption {
+      type = lib.types.listOf lib.types.attrs;
+      description = ''
+        Accounts to enable before the bank service starts.
 
-  extraOptions.services.libeufin.bank = {
+        This is mainly needed for the nexus currency conversion
+        since the exchange's bank account is expected to be already
+        registered.
+
+        Don't forget to change the account passwords afterwards.
+      '';
+      default = [ ];
+    };
+
     settings = lib.mkOption {
       description = ''
         Configuration options for the libeufin bank system config file.
@@ -21,13 +38,12 @@ libeufinUtils.mkLibeufinModule {
         For a list of all possible options, please see the man page [`libeufin-bank.conf(5)`](https://docs.taler.net/manpages/libeufin-bank.conf.5.html)
       '';
       type = lib.types.submodule {
-        inherit (options.services.libeufin.settings.type.nestedTypes) freeformType;
+        freeformType = (pkgs.formats.ini {}).type;
+        # inherit (options.services.libeufin.settings.type.nestedTypes) freeformType;
         options = {
           libeufin-bank = {
             CURRENCY = lib.mkOption {
               type = lib.types.str;
-              default = "${config.services.taler.settings.taler.CURRENCY}";
-              defaultText = "{option}`services.taler.settings.taler.CURRENCY`";
               description = ''
                 The currency under which the libeufin-bank should operate.
 
@@ -73,19 +89,17 @@ libeufinUtils.mkLibeufinModule {
         };
       };
     };
-    initialAccounts = lib.mkOption {
-      type = lib.types.listOf lib.types.attrs;
-      internal = true;
-      description = ''
-        Accounts to enable before the bank service starts.
+  };
 
-        This is mainly needed for the nexus currency conversion
-        since the exchange's bank account is expected to be already
-        registered.
+  config = let
+    cfg = config.services.libeufin.bank;
+  in {
+    services.libeufin.bank.settings.libeufin-bank.CURRENCY =
+      lib.mkIf ((config.services.taler.settings.taler.CURRENCY or null) != null)
+      config.services.taler.settings.taler.CURRENCY;
 
-        Don't forget to change the account passwords afterwards.
-      '';
-      default = [ ];
-    };
+    networking.firewall.allowedTCPPorts = lib.optionals cfg.openFirewall [
+      cfg.settings.libeufin-bank.PORT
+    ];
   };
 }
