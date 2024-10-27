@@ -16,8 +16,9 @@ import ./make-test-python.nix ({ lib, ... }: {
   testScript = ''
     client.wait_for_unit("tor.service")
     client.wait_for_open_port(9051)
-    assert "514 Authentication required." in client.succeed(
+    getinfo_result = client.succeed(
         "echo GETINFO version | nc 127.0.0.1 9051"
     )
+    assert "514 Authentication required." in getinfo_result, f"514 not in getinfo:\n{getinfo_result}"
   '';
 })

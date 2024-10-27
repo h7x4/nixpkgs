@@ -91,15 +91,17 @@ in
 
       with subtest("Privoxy can filter http requests"):
           machine.wait_for_open_port(80)
-          assert "great day" in machine.succeed(
+          result = machine.succeed(
               "curl -sfL http://example.com/how-are-you? | tee /dev/stderr"
           )
+          assert "great day" in result, f'"great day" not in result: {result}'
 
       with subtest("Privoxy can filter https requests"):
           machine.wait_for_open_port(443)
-          assert "great day" in machine.succeed(
+          result = machine.succeed(
               "curl -sfL https://example.com/how-are-you? | tee /dev/stderr"
           )
+          assert "great day" in result, f'"great day" not in result: {result}'
 
       with subtest("Blocks are working"):
           machine.wait_for_open_port(443)

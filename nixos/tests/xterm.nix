@@ -17,7 +17,8 @@ import ./make-test-python.nix ({ pkgs, ...} : {
       machine.sleep(2)
       machine.send_chars("echo $XTERM_VERSION >> /tmp/xterm_version\n")
       machine.wait_for_file("/tmp/xterm_version")
-      assert "${pkgs.xterm.version}" in machine.succeed("cat /tmp/xterm_version")
+      xterm_version = machine.succeed("cat /tmp/xterm_version")
+      assert "${pkgs.xterm.version}" in xterm_version, f'"${pkgs.xterm.version}" not in xterm_version:\n{xterm_version}'
       machine.screenshot("window")
     '';
 })

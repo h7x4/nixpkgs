@@ -71,7 +71,7 @@ import ../make-test-python.nix (
 
                       # Check the message was received by dendrite
                       last_message = response.rooms.join[room_id].timeline.events[-1].body
-                      assert last_message == "Hello world!"
+                      assert last_message == "Hello world!", f'last_message is not "Hello world!":\n{last_message}'
 
                       # Leave the room
                       response = await client.room_leave(room_id)

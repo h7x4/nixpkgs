@@ -24,8 +24,9 @@ import ./make-test-python.nix ({ pkgs, ... }: {
     client.wait_for_unit("multi-user.target")
 
     with subtest("Check that the Node-RED webserver can be reached."):
-        assert "<title>Node-RED</title>" in client.succeed(
+        result = client.succeed(
             "curl -sSf http:/nodered:1880/ | grep title"
         )
+        assert "<title>Node-RED</title>" in result, f'Node-RED not in result:\n{result}'
   '';
 })
