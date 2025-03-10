@@ -2,6 +2,7 @@
   lib,
   buildGoModule,
   fetchFromGitea,
+  installShellFiles,
 }:
 
 buildGoModule rec {
@@ -17,6 +18,13 @@ buildGoModule rec {
   };
 
   vendorHash = "sha256-nb0lQEAaIYlGpodFQLhMk/24DmTgg5K3zQ4s/XY+Z1w=";
+
+  nativeBuildInputs = [ installShellFiles ];
+  postInstall = ''
+    installShellCompletion --cmd tea \
+      --bash "contrib/autocomplete.sh" \
+      --zsh "contrib/autocomplete.zsh"
+  '';
 
   meta = with lib; {
     description = "Gitea official CLI client";
