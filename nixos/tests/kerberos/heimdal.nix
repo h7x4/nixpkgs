@@ -150,10 +150,16 @@ import ../make-test-python.nix (
         alice_krb_pw = "alice_hunter2"
         alice_old_krb_pw = ""
         alice_krb_admin_pw = "alice_admin_hunter2"
+        bob_krb_pw = "bob_hunter2"
 
         def random_password():
           password_chars = string.ascii_letters + string.digits + string.punctuation.replace('"', "")
           return "".join(random.choice(password_chars) for _ in range(16))
+
+        def clear_tty(node):
+            node.send_chars("clear\n")
+            ps1 = r"\[alice@\w+:~\]\$ "
+            node.wait_until_tty_matches("1", ps1)
 
         with subtest("Server: initialize user principals and keytabs"):
           server.succeed(f'kadmin -l add --password="{alice_krb_admin_pw}" --use-defaults alice/admin')
@@ -161,6 +167,9 @@ import ../make-test-python.nix (
 
           server.succeed(f'kadmin -p alice/admin -K admin.keytab add --password="{alice_krb_pw}" --use-defaults alice')
           server.succeed("kadmin -l ext_keytab --keytab=alice.keytab alice")
+
+          server.succeed("kadmin -p alice/admin -K admin.keytab add --password={bob_krb_pw} --use-defaults bob")
+          server.succeed("kadmin -l ext_keytab --keytab=bob.keytab bob")
 
         server.wait_for_unit("getty@tty1.service")
         server.wait_until_succeeds("pgrep -f 'agetty.*tty1'")
@@ -178,7 +187,7 @@ import ../make-test-python.nix (
           if not "host/server.foo.bar" in ktutil_list:
             exit(1)
 
-          server.send_chars("clear\n")
+          clear_tty(server)
 
         client.systemctl("start network-online.target")
         client.wait_for_unit("network-online.target")
@@ -203,7 +212,7 @@ import ../make-test-python.nix (
           if not "host/client.foo.bar" in ktutil_list:
             exit(1)
 
-          client.send_chars("clear\n")
+          clear_tty(client)
 
         with subtest("Client: kinit alice"):
           client.succeed(
@@ -212,7 +221,7 @@ import ../make-test-python.nix (
           )
           tickets = client.succeed("klist")
           assert "Principal: alice@FOO.BAR" in tickets
-          client.send_chars("clear\n")
+          clear_tty(client)
 
         with subtest("Client: kpasswd alice"):
           alice_old_krb_pw = alice_krb_pw
@@ -227,7 +236,14 @@ import ../make-test-python.nix (
 
           client.wait_until_tty_matches("1", "Success : Password changed")
 
-          client.send_chars("clear\n")
+          clear_tty(client)
+
+        # with subtest("Client: kadmin get bob"):
+        #   client.send_chars("sudo kadmin -p alice/admin get bob\n")
+        #   client.wait_until_tty_matches("1", "alice/admin@FOO.BAR's Password:")
+        #   client.send_chars(f"{alice_krb_admin_pw}\n")
+        #   client.wait_until_tty_matches("1", "Principal: bob@FOO.BAR")
+        #   clear_tty(client)
 
         with subtest("Server: kinit alice"):
           server.succeed(
@@ -236,7 +252,7 @@ import ../make-test-python.nix (
           )
           tickets = client.succeed("klist")
           assert "Principal: alice@FOO.BAR" in tickets
-          server.send_chars("clear\n")
+          clear_tty(server)
 
         with subtest("Server: kpasswd alice"):
           alice_old_krb_pw = alice_krb_pw
@@ -251,7 +267,14 @@ import ../make-test-python.nix (
 
           server.wait_until_tty_matches("1", "Success : Password changed")
 
-          server.send_chars("clear\n")
+          clear_tty(server)
+
+        # with subtest("Server: kadmin get bob"):
+        #   server.send_chars("sudo kadmin -p alice/admin get bob\n")
+        #   server.wait_until_tty_matches("1", "alice/admin@FOO.BAR's Password:")
+        #   server.send_chars(f"{alice_krb_admin_pw}\n")
+        #   server.wait_until_tty_matches("1", "Principal: bob@FOO.BAR")
+        #   clear_tty(server)
       '';
 
     meta.maintainers = pkgs.heimdal.meta.maintainers;
