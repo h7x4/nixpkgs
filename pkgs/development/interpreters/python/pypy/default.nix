@@ -106,7 +106,7 @@ stdenv.mkDerivation rec {
   ]
   ++
     lib.optionals
-      (lib.any (l: l == optimizationLevel) [
+      (lib.elem optimizationLevel [
         "0"
         "1"
         "2"
