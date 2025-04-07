@@ -55,7 +55,7 @@ buildPythonPackage rec {
   pythonImportsCheck = [ "whey" ];
 
   optional-dependencies = {
-    all = lib.flatten (lib.attrValues (lib.filterAttrs (n: v: n != "all") optional-dependencies));
+    all = lib.concatLists (lib.attrValues (lib.removeAttrs [ "all" ] optional-dependencies));
     editable = [
       editables
     ];

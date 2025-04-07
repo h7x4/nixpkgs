@@ -142,7 +142,7 @@ buildPythonPackage rec {
   optional-dependencies = rec {
     adag = cgraph;
     air = lib.unique (data ++ serve ++ tune ++ train);
-    all = lib.flatten (builtins.attrValues optional-dependencies);
+    all = lib.concatLists (lib.attrValues (lib.removeAttrs [ "all" ] optional-dependencies));
     cgraph = [
       cupy
     ];
