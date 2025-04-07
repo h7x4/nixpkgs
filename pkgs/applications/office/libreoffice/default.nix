@@ -165,8 +165,8 @@ assert builtins.elem variant [
 
 let
   inherit (lib)
-    flatten
     flip
+    concatMap
     concatMapStrings
     concatStringsSep
     getDev
@@ -248,12 +248,11 @@ let
   # See `postPatch` for details
   kdeDeps = symlinkJoin {
     name = "libreoffice-kde-dependencies-${version}";
-    paths = flatten (
-      map
-        (e: [
-          (getDev e)
-          (getLib e)
-        ])
+    paths = concatMap (
+      (e: [
+        (getDev e)
+        (getLib e)
+      ])
         [
           qt6.qtbase
           qt6.qtmultimedia
