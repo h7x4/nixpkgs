@@ -13,12 +13,12 @@
       glibcLocales = lib.mkOption {
         type = lib.types.path;
         default = pkgs.glibcLocales.override {
-          allLocales = lib.any (x: x == "all") config.i18n.supportedLocales;
+          allLocales = lib.elem "all" config.i18n.supportedLocales;
           locales = config.i18n.supportedLocales;
         };
         defaultText = lib.literalExpression ''
           pkgs.glibcLocales.override {
-            allLocales = lib.any (x: x == "all") config.i18n.supportedLocales;
+            allLocales = lib.elem "all" config.i18n.supportedLocales;
             locales = config.i18n.supportedLocales;
           }
         '';
