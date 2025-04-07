@@ -41,7 +41,7 @@ buildPythonPackage rec {
   ];
 
   optional-dependencies = {
-    all = lib.flatten (lib.attrValues (lib.filterAttrs (n: v: n != "all") optional-dependencies));
+    all = lib.concatLists (lib.attrValues (lib.removeAttrs optional-dependencies [ "all" ]));
     cli = [
       click
       consolekit
