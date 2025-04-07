@@ -18,7 +18,7 @@ let
 in
 stdenv.mkDerivation {
   name = "androidenv-test-suite";
-  buildInputs = lib.mapAttrsToList (name: value: value) all-tests;
+  buildInputs = lib.attrValues all-tests;
 
   buildCommand = ''
     touch $out
