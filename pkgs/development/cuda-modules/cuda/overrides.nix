@@ -8,13 +8,13 @@ let
 
       # NOTE(@connorbaker): We MUST use `lib` from `prev` because the attribute
       # names CAN NOT depend on `final`.
-      inherit (prev.lib.attrsets) filterAttrs mapAttrs;
+      inherit (prev.lib.attrsets) intersectAttrs mapAttrs;
       inherit (prev.lib.trivial) pipe;
 
       # NOTE: Filter out attributes that are not present in the previous version of
       # the package set. This is necessary to prevent the appearance of attributes
       # like `cuda_nvcc` in `cudaPackages_10_0, which predates redistributables.
-      filterOutNewAttrs = filterAttrs (name: _: prev ? ${name});
+      filterOutNewAttrs = intersectAttrs prev;
 
       # Apply callPackage to each attribute value, yielding a value to be passed
       # to overrideAttrs.
