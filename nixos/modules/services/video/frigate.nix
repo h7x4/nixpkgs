@@ -28,7 +28,7 @@ let
 
   format = pkgs.formats.yaml { };
 
-  filteredConfig = converge (filterAttrsRecursive (_: v: !elem v [ null ])) cfg.settings;
+  filteredConfig = converge (filterAttrsRecursive (_: v: v != null)) cfg.settings;
 
   cameraFormat =
     with types;
