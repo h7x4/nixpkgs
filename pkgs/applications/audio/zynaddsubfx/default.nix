@@ -47,7 +47,7 @@
   ruby,
 }:
 
-assert builtins.any (g: guiModule == g) [
+assert builtins.elem guiModule [
   "fltk"
   "ntk"
   "zest"
