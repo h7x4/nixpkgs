@@ -1212,12 +1212,12 @@ let
   };
 
 in
-lib.mapAttrs (lib.const (
-  attrs:
+lib.mapAttrs (
+  _: attrs:
   makeTest (
     attrs
     // {
       name = "${attrs.name}-Networking-${if networkd then "Networkd" else "Scripted"}";
     }
   )
-)) testCases
+) testCases
