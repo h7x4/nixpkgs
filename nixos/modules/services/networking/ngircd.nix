@@ -45,9 +45,12 @@ in
 
       wantedBy = [ "multi-user.target" ];
 
-      serviceConfig.ExecStart = "${cfg.package}/sbin/ngircd --config ${configFile} --nodaemon";
-
-      serviceConfig.User = "ngircd";
+      serviceConfig = {
+        Type = "notify";
+        WatchdogSec = 60;
+        ExecStart = "${cfg.package}/sbin/ngircd --config ${configFile} --nodaemon";
+        User = "ngircd";
+      };
     };
 
     users.users.ngircd = {
