@@ -186,6 +186,8 @@ let
           wants = [ "network.target" ];
           wantedBy = [ "multi-user.target" ];
           serviceConfig = {
+            Type = "notify";
+            WatchdogSec = 60;
             Restart = "always";
             AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
             DynamicUser = true;
