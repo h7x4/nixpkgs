@@ -206,6 +206,7 @@ in
       description = "mpdscribble mpd scrobble client";
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
+        Type = "notify";
         DynamicUser = true;
         StateDirectory = "mpdscribble";
         RuntimeDirectory = "mpdscribble";

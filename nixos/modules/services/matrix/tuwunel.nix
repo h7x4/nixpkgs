@@ -216,6 +216,7 @@ in
       startLimitBurst = 5;
       startLimitIntervalSec = 60;
       serviceConfig = {
+        Type = "notify";
         DynamicUser = true;
         User = cfg.user;
         Group = cfg.group;

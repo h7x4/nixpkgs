@@ -120,6 +120,7 @@ in
         '';
 
         serviceConfig = {
+          Type = "notify";
           Restart = "on-failure";
           RestartSec = 60;
         };

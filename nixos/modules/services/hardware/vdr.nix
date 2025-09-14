@@ -72,6 +72,7 @@ in
       wants = optional cfg.enableLirc "lircd.service";
       after = [ "network.target" ] ++ optional cfg.enableLirc "lircd.service";
       serviceConfig = {
+        Type = "notify";
         ExecStart =
           let
             args = [
