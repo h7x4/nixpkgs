@@ -12,21 +12,21 @@ let
   supported = {
     x86_64-linux = {
       name = "linux-amd64";
-      hash = "sha256-zL9tXl2HsO8JZXEGsjg4+lDJJz30StOMH96rU7neDsg=";
+      hash = "sha256-nWWw2A/MtWdmj6QVhckmGUexdA9S66jTo2jPb4/Xt5M=";
     };
     aarch64-linux = {
       name = "linux-arm64";
-      hash = "sha256-ACy3rXsvBZNVXdVkpP2AqrsoqKPliw6m9UUWrFOCBzs=";
+      hash = "sha256-Vo0be6w1+8qgMg71DfxPqU1nJEFjYoSrUyoF10vGA9Q=";
     };
     armv7l-linux = {
       name = "linux-armhf";
-      hash = "sha256-nD1pHL/SQqC7OlxuovWwvtnXKMmhfx5qFaF4ti8gh8g=";
+      hash = "sha256-J3b0edvncvTVyLZCAdXohBoPZiqO7yCPi9r1mSjP88Q=";
     };
   };
 
   platform = supported.${stdenv.system} or (throw "unsupported platform ${stdenv.system}");
 
-  version = "10.23.2";
+  version = "10.24.2";
 
   url =
     let
