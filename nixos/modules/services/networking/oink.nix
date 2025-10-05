@@ -84,8 +84,8 @@ in
       description = "Dynamic DNS client for Porkbun";
       after = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
-      script = "${cfg.package}/bin/oink -c ${oinkConfig}";
       serviceConfig = {
+        ExecStart = "${cfg.package}/bin/oink -c ${oinkConfig}";
         Restart = "on-failure";
         RestartSec = "10";
       };
