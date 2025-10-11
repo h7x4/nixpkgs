@@ -6,6 +6,7 @@
 }:
 let
   cfg = config.services.timekpr;
+  format = pkgs.formats.ini { };
 in
 {
   options = {
@@ -23,10 +24,46 @@ in
           All listed users will become part of the `timekpr` group so they can manage timekpr settings without requiring sudo.
         '';
       };
+
+      settings = lib.mkOption {
+        type = lib.types.submodule {
+          freeformType = format.type;
+        };
+        default = { };
+        description = "";
+      };
+
+      users = lib.mkOption {
+        type = lib.types.attrsOf (lib.types.submodule {
+          options = {
+            settings = lib.mkOption {
+              type = lib.types.submodule {
+                freeformType = format.type;
+              };
+              default = { };
+              description = "";
+            };
+            controlSettings = lib.mkOption {
+              type = lib.types.submodule {
+                freeformType = format.type;
+              };
+              default = { };
+              description = "";
+            };
+          };
+        });
+        default = { };
+        description = "";
+      };
     };
   };
 
   config = lib.mkIf cfg.enable {
+
+    services.timekpr.settings = {
+
+    };
+
     users.groups.timekpr = {
       gid = 2000;
       members = cfg.adminUsers;
