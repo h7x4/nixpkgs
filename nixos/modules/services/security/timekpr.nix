@@ -6,9 +6,6 @@
 }:
 let
   cfg = config.services.timekpr;
-  targetBaseDir = "/var/lib/timekpr";
-  daemonUser = "root";
-  daemonGroup = "root";
 in
 {
   options = {
@@ -52,13 +49,16 @@ in
     systemd.services.timekpr = {
       enable = true;
       wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        StateDirectory = [
+          "timepkr"
+          "timepkr/config"
+          "timepkr/work"
+        ];
+        StateDirectoryMode = "0755";
+      };
     };
     security.polkit.enable = true;
-    systemd.tmpfiles.rules = [
-      "d ${targetBaseDir} 0755 ${daemonUser} ${daemonGroup} -"
-      "d ${targetBaseDir}/config 0755 ${daemonUser} ${daemonGroup} -"
-      "d ${targetBaseDir}/work 0755 ${daemonUser} ${daemonGroup} -"
-    ];
   };
 
   meta.maintainers = [ lib.maintainers.atry ];
