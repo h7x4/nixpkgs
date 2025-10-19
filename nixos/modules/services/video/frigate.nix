@@ -33,9 +33,8 @@ let
 
   configFileUnchecked = format.generate "frigate.yaml" filteredConfig;
   configFileChecked =
-    pkgs.runCommand "frigate-config"
+    pkgs.runCommandNoCCLocal "frigate-config"
       {
-        preferLocalBuilds = true;
       }
       ''
         function error() {

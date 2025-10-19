@@ -24,7 +24,7 @@ let
     };
   };
 
-  acpiConfDir = pkgs.runCommand "acpi-events" { preferLocalBuild = true; } ''
+  acpiConfDir = pkgs.runCommandNoCCLocal "acpi-events" { } ''
     mkdir -p $out
     ${
       # Generate a configuration file for each event. (You can't have

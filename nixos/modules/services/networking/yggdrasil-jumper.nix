@@ -140,7 +140,7 @@ in
       # Generate, concatenate and validate config file
       jumperSettings = format.generate "yggdrasil-jumper-settings" cfg.settings;
       jumperExtraConfig = pkgs.writeText "yggdrasil-jumper-extra-config" cfg.extraConfig;
-      jumperConfig = pkgs.runCommand "yggdrasil-jumper-config" { } ''
+      jumperConfig = pkgs.runCommandNoCCLocal "yggdrasil-jumper-config" { } ''
         export PATH="${makeBinPath wgExtraPkgs}:$PATH"
         cat ${jumperSettings} ${jumperExtraConfig} \
           | tee $out \

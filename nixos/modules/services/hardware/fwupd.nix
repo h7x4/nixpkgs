@@ -42,7 +42,7 @@ let
 
   enableRemote = base: remote: {
     "fwupd/remotes.d/${remote}.conf" = {
-      source = pkgs.runCommand "${remote}-enabled.conf" { } ''
+      source = pkgs.runCommandNoCCLocal "${remote}-enabled.conf" { } ''
         sed "s,^Enabled=false,Enabled=true," \
         "${base}/etc/fwupd/remotes.d/${remote}.conf" > "$out"
       '';

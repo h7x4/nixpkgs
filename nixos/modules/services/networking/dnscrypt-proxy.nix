@@ -58,7 +58,7 @@ in
       example = "/etc/dnscrypt-proxy/dnscrypt-proxy.toml";
       type = lib.types.path;
       default =
-        pkgs.runCommand "dnscrypt-proxy.toml"
+        pkgs.runCommandNoCCLocal "dnscrypt-proxy.toml"
           {
             json = builtins.toJSON cfg.settings;
             passAsFile = [ "json" ];

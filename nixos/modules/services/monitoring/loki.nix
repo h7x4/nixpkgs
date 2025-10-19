@@ -18,7 +18,7 @@ let
 
   prettyJSON =
     conf:
-    pkgs.runCommand "loki-config.json" { } ''
+    pkgs.runCommandNoCCLocal "loki-config.json" { } ''
       echo '${builtins.toJSON conf}' | ${pkgs.jq}/bin/jq 'del(._module)' > $out
     '';
 

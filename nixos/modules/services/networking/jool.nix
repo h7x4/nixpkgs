@@ -287,10 +287,9 @@ in
 
     # Check the configuration of each instance
     system.checks = lib.optional (cfg.nat64 != { } || cfg.siit != { }) (
-      pkgs.runCommand "jool-validated"
+      pkgs.runCommandNoCCLocal "jool-validated"
         {
           nativeBuildInputs = [ jool-cli ];
-          preferLocalBuild = true;
         }
         (
           lib.concatStrings (lib.mapAttrsToList checkNat64 cfg.nat64 ++ lib.mapAttrsToList checkSiit cfg.siit)

@@ -38,9 +38,8 @@ let
       file;
   checkConfig =
     file:
-    pkgs.runCommand "checked-blackbox-exporter.conf"
+    pkgs.runCommandNoCCLocal "checked-blackbox-exporter.conf"
       {
-        preferLocalBuild = true;
         nativeBuildInputs = [ pkgs.buildPackages.prometheus-blackbox-exporter ];
       }
       ''

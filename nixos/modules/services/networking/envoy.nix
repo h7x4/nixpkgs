@@ -10,7 +10,7 @@ let
   conf = format.generate "envoy.json" cfg.settings;
   validateConfig =
     required: file:
-    pkgs.runCommand "validate-envoy-conf" { } ''
+    pkgs.runCommandNoCCLocal "validate-envoy-conf" { } ''
       ${cfg.package}/bin/envoy --log-level error --mode validate -c "${file}" ${
         lib.optionalString (!required) "|| true"
       }

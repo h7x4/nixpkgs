@@ -59,7 +59,7 @@ let
 
         yaml = settingsFormat.generate "recursor.yml" cfg.yaml-settings;
       in
-      pkgs.runCommand "recursor-merged.yml" { } ''
+      pkgs.runCommandNoCCLocal "recursor-merged.yml" { } ''
         ${pkgs.pdns-recursor}/bin/rec_control show-yaml --config ${conf} > override.yml
         ${pkgs.yq-go}/bin/yq '. *= load("override.yml")' ${yaml} > $out
       ''

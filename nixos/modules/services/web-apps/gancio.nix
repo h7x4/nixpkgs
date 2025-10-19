@@ -166,7 +166,7 @@ in
 
   config = mkIf cfg.enable {
     environment.systemPackages = [
-      (pkgs.runCommand "gancio" { } ''
+      (pkgs.runCommandNoCCLocal "gancio" { } ''
         mkdir -p $out/bin
         echo '#!${pkgs.runtimeShell}
         cd /var/lib/gancio/

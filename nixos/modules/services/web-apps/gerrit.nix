@@ -39,7 +39,7 @@ let
   '';
 
   gerrit-plugins =
-    pkgs.runCommand "gerrit-plugins"
+    pkgs.runCommandNoCCLocal "gerrit-plugins"
       {
         buildInputs = [ gerrit-cli ];
       }

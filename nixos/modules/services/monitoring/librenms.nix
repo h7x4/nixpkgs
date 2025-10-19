@@ -23,11 +23,10 @@ let
     date.timezone = "${config.time.timeZone}"
   '';
   phpIni =
-    pkgs.runCommand "php.ini"
+    pkgs.runCommandNoCCLocal "php.ini"
       {
         inherit (package) phpPackage;
         inherit phpOptions;
-        preferLocalBuild = true;
         passAsFile = [ "phpOptions" ];
       }
       ''

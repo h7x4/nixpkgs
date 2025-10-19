@@ -39,7 +39,7 @@ let
     '';
   };
 
-  home = pkgs.runCommand "quake3-home" { } ''
+  home = pkgs.runCommandNoCCLocal "quake3-home" { } ''
     mkdir -p $out/.q3a/baseq3
 
     for file in ${cfg.baseq3}/*; do

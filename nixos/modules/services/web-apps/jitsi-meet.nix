@@ -24,7 +24,7 @@ let
       '';
       userJson = pkgs.writeText "user.json" (builtins.toJSON userCfg);
     in
-    (pkgs.runCommand "${varName}.js" { } ''
+    (pkgs.runCommandNoCCLocal "${varName}.js" { } ''
       ${pkgs.nodejs}/bin/node ${extractor} ${source} ${varName} > default.json
       (
         echo "var ${varName} = "

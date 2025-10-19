@@ -100,7 +100,7 @@ let
   # lines which do not contain store paths.
   internAndFixPlugins =
     name: intern-fn: paths:
-    pkgs.runCommand name { } ''
+    pkgs.runCommandNoCCLocal name { } ''
       mkdir -p "$out"
       cd "$out"
       ${lib.concatStringsSep "\n" (map intern-fn paths)}
@@ -124,7 +124,7 @@ let
     internAndFixPlugins "munin-extra-auto-plugins.d" internManyPlugins
       nodeCfg.extraAutoPlugins;
 
-  customStaticDir = pkgs.runCommand "munin-custom-static-data" { } ''
+  customStaticDir = pkgs.runCommandNoCCLocal "munin-custom-static-data" { } ''
     cp -a "${pkgs.munin}/etc/opt/munin/static" "$out"
     cd "$out"
     chmod -R u+w .

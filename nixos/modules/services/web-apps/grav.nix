@@ -24,7 +24,7 @@ let
 
   poolName = "grav";
 
-  servedRoot = pkgs.runCommand "grav-served-root" { } ''
+  servedRoot = pkgs.runCommandNoCCLocal "grav-served-root" { } ''
     cp --reflink=auto --no-preserve=mode -r ${cfg.package} $out
 
     for p in assets images user system/config; do

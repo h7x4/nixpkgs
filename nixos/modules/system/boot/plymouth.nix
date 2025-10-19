@@ -24,7 +24,7 @@ let
     osVersion = config.system.nixos.release;
   };
 
-  plymouthLogos = pkgs.runCommand "plymouth-logos" { inherit (cfg) logo; } ''
+  plymouthLogos = pkgs.runCommandNoCCLocal "plymouth-logos" { inherit (cfg) logo; } ''
     mkdir -p $out
 
     # For themes that are compiled with PLYMOUTH_LOGO_FILE
@@ -217,7 +217,7 @@ in
         "/etc/plymouth/logo.png".source = cfg.logo;
         "/etc/plymouth/plymouthd.defaults".source = "${plymouth}/share/plymouth/plymouthd.defaults";
         # Directories
-        "/etc/plymouth/plugins".source = pkgs.runCommand "plymouth-initrd-plugins" { } (
+        "/etc/plymouth/plugins".source = pkgs.runCommandNoCCLocal "plymouth-initrd-plugins" { } (
           checkIfThemeExists
           + ''
             moduleName="$(sed -n 's,ModuleName *= *,,p' ${themesEnv}/share/plymouth/themes/${cfg.theme}/${cfg.theme}.plymouth)"
@@ -230,7 +230,7 @@ in
             rm $out/renderers/x11.so
           ''
         );
-        "/etc/plymouth/themes".source = pkgs.runCommand "plymouth-initrd-themes" { } (
+        "/etc/plymouth/themes".source = pkgs.runCommandNoCCLocal "plymouth-initrd-themes" { } (
           checkIfThemeExists
           + ''
             mkdir -p $out/${cfg.theme}
@@ -255,7 +255,7 @@ in
         );
 
         # Fonts
-        "/etc/plymouth/fonts".source = pkgs.runCommand "plymouth-initrd-fonts" { } ''
+        "/etc/plymouth/fonts".source = pkgs.runCommandNoCCLocal "plymouth-initrd-fonts" { } ''
           mkdir -p $out
           cp ${escapeShellArg cfg.font} $out
         '';
@@ -299,7 +299,7 @@ in
     # Insert required udev rules. We take stage 2 systemd because the udev
     # rules are only generated when building with logind.
     boot.initrd.services.udev.packages = [
-      (pkgs.runCommand "initrd-plymouth-udev-rules" { } ''
+      (pkgs.runCommandNoCCLocal "initrd-plymouth-udev-rules" { } ''
         mkdir -p $out/etc/udev/rules.d
         cp ${config.systemd.package.out}/lib/udev/rules.d/{70-uaccess,71-seat}.rules $out/etc/udev/rules.d
         sed -i '/loginctl/d' $out/etc/udev/rules.d/71-seat.rules

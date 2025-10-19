@@ -302,11 +302,13 @@ in
         };
 
         generatedPasteConfig = iniFormat.generate "paste.ini" cfg.paste.settings;
-        pasteConfig = pkgs.runCommand "paste-combined.ini" { nativeBuildInputs = [ pkgs.crudini ]; } ''
-          cp ${cfg.package.src}/paste.ini $out
-          chmod +w $out
-          crudini --merge $out < ${generatedPasteConfig}
-        '';
+        pasteConfig =
+          pkgs.runCommandNoCCLocal "paste-combined.ini" { nativeBuildInputs = [ pkgs.crudini ]; }
+            ''
+              cp ${cfg.package.src}/paste.ini $out
+              chmod +w $out
+              crudini --merge $out < ${generatedPasteConfig}
+            '';
       in
       {
         mediagoblin-celeryd = lib.recursiveUpdate serviceDefaults {

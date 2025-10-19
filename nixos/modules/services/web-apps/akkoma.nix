@@ -445,9 +445,8 @@ let
         '';
       };
     in
-    pkgs.runCommand "akkoma-env"
+    pkgs.runCommandNoCCLocal "akkoma-env"
       {
-        preferLocalBuild = true;
       }
       ''
         mkdir -p "$out/bin"
@@ -498,9 +497,8 @@ let
   uploadDir = ex.":pleroma".":instance".upload_dir;
 
   staticFiles =
-    pkgs.runCommand "akkoma-static"
+    pkgs.runCommandNoCCLocal "akkoma-static"
       {
-        preferLocalBuild = true;
       }
       ''
         ${concatStringsSep "\n" (

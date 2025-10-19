@@ -437,13 +437,13 @@ in
           "mariadb"
         ];
 
-      mySqlCaKeystore = pkgs.runCommand "mysql-ca-keystore" { } ''
+      mySqlCaKeystore = pkgs.runCommandNoCCLocal "mysql-ca-keystore" { } ''
         ${pkgs.jre}/bin/keytool -importcert -trustcacerts -alias MySQLCACert -file ${cfg.database.caCert} -keystore $out -storepass notsosecretpassword -noprompt
       '';
 
       # Both theme and theme type directories need to be actual
       # directories in one hierarchy to pass Keycloak checks.
-      themesBundle = pkgs.runCommand "keycloak-themes" { } ''
+      themesBundle = pkgs.runCommandNoCCLocal "keycloak-themes" { } ''
         linkTheme() {
           theme="$1"
           name="$2"

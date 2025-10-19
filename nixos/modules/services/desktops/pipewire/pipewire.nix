@@ -39,7 +39,7 @@ let
     }) config;
   extraConfigPkgFromFiles =
     locations: filesSet:
-    pkgs.runCommand "pipewire-extra-config" { } ''
+    pkgs.runCommandNoCCLocal "pipewire-extra-config" { } ''
       mkdir -p ${concatMapStringsSep " " (l: "$out/share/pipewire/${l}.conf.d") locations}
       ${concatMapStringsSep ";" ({ name, value }: "ln -s ${value} $out/${name}") (attrsToList filesSet)}
     '';
@@ -51,7 +51,7 @@ let
   # overlays can use the outputs to replace the originals in FHS environments.
   #
   # This doesn't work in general because of missing development information.
-  jack-libs = pkgs.runCommand "jack-libs" { } ''
+  jack-libs = pkgs.runCommandNoCCLocal "jack-libs" { } ''
     mkdir -p "$out/lib"
     ln -s "${cfg.package.jack}/lib" "$out/lib/pipewire"
   '';

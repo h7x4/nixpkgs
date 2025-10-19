@@ -22,7 +22,7 @@ let
   finalPackage = cfg.package.override {
     # The calendarSettings need to be merged with the default_specification.yml
     # in the source. This way we use upstreams default values but keep everything overridable.
-    defaultSpecificationFile = pkgs.runCommand "custom-default_specification.yml" { } ''
+    defaultSpecificationFile = pkgs.runCommandNoCCLocal "custom-default_specification.yml" { } ''
       ${pkgs.yq}/bin/yq -s '.[0] * .[1]' ${cfg.package}/${cfg.package.defaultSpecificationPath} ${nixosSpec} > $out
     '';
   };

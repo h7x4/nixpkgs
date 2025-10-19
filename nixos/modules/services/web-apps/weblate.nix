@@ -110,7 +110,7 @@ let
   ''
   + cfg.extraConfig;
   settings_py =
-    pkgs.runCommand "weblate_settings.py"
+    pkgs.runCommandNoCCLocal "weblate_settings.py"
       {
         inherit weblateConfig;
         passAsFile = [ "weblateConfig" ];

@@ -324,7 +324,7 @@ let
       '';
       apply =
         srcs:
-        pkgs.runCommand "stash-${kind}"
+        pkgs.runCommandNoCCLocal "stash-${kind}"
           {
             inherit srcs;
             nativeBuildInputs = [ pkgs.yq-go ];

@@ -14,7 +14,7 @@ let
   configFile = settingsFormat.generate "librespeed-rust-config.toml" cfg.settings;
 
   librespeedAssets =
-    pkgs.runCommand "librespeed-assets"
+    pkgs.runCommandNoCCLocal "librespeed-assets"
       {
         serversList = ''
           function get_servers() {

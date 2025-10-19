@@ -105,10 +105,9 @@ in
       environment.systemPackages = [ cronNixosPkg ];
       environment.etc.crontab = {
         source =
-          pkgs.runCommand "crontabs"
+          pkgs.runCommandNoCCLocal "crontabs"
             {
               inherit allFiles;
-              preferLocalBuild = true;
             }
             ''
               touch $out
