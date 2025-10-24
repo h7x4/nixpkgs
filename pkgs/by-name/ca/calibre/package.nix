@@ -143,7 +143,7 @@ stdenv.mkDerivation (finalAttrs: {
         odfpy
       ]
       ++
-        lib.optionals (lib.lists.any (p: p == stdenv.hostPlatform.system) pyqt6-webengine.meta.platforms)
+        lib.optionals (lib.lists.elem stdenv.hostPlatform.system pyqt6-webengine.meta.platforms)
           [
             # much of calibre's functionality is usable without a web
             # browser, so we enable building on platforms which qtwebengine
