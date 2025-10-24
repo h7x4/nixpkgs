@@ -107,7 +107,7 @@ stdenv.mkDerivation (finalAttrs: {
     homepage = "https://github.com/ValleyBell/libvgm";
     license =
       if
-        (enableEmulation && (withAllEmulators || (lib.lists.any (core: core == "WSWAN_ALL") emulators)))
+        (enableEmulation && (withAllEmulators || (lib.lists.elem "WSWAN_ALL" emulators)))
       then
         lib.licenses.unfree # https://github.com/ValleyBell/libvgm/issues/43
       else
