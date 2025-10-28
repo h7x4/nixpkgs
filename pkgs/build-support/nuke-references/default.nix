@@ -6,7 +6,6 @@
 {
   lib,
   stdenvNoCC,
-  perl,
   signingUtils,
   shell ? stdenvNoCC.shell,
 }:
@@ -26,10 +25,8 @@ stdenvNoCC.mkDerivation {
     chmod a+x $out/bin/nuke-refs
   '';
 
-  # FIXME: get rid of perl dependency.
   env = {
-    inherit perl;
-    inherit (builtins) storeDir;
+    storeDir = builtins.replaceStrings [ "'" ] [ "\\'" ] builtins.storeDir;
     shell = lib.getBin shell + (shell.shellPath or "");
     signingUtils = lib.optionalString (
       stdenvNoCC.targetPlatform.isDarwin && stdenvNoCC.targetPlatform.isAarch64

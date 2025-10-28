@@ -6,24 +6,34 @@ if [[ -n "@signingUtils@" ]]; then
     source "@signingUtils@"
 fi
 
-excludes=""
+declare -A excludes
+excludes['@storeDir@/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee']=1
 while getopts e: o; do
     case "$o" in
-        e) storeId=$(echo "$OPTARG" | @perl@/bin/perl -ne "print \"\$1\" if m|^\Q@storeDir@\E/([a-z0-9]{32})-.*|")
-           if [ -z "$storeId" ]; then
+        e) if [[ "$OPTARG" =~ ('@storeDir@/'[a-z0-9]{32})-.* ]]; then
+               excludes["${BASH_REMATCH[1]}"]=1
+           else
                echo "-e argument must be a Nix store path"
                exit 1
            fi
-           excludes="$excludes(?!$storeId)"
         ;;
     esac
 done
-shift $(($OPTIND-1))
+shift $((OPTIND-1))
 
 for i in "$@"; do
     if test ! -L "$i" -a -f "$i"; then
-        cat "$i" | @perl@/bin/perl -pe "s|\Q@storeDir@\E/$excludes[a-z0-9]{32}-|@storeDir@/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-|g" > "$i.tmp"
-        if test -x "$i"; then chmod +x "$i.tmp"; fi
+        while IFS= read -r line; do
+            lineout="$line"
+            while [[ "$line" =~ ('@storeDir@/'[a-z0-9]{32})- ]]; do
+                line="${line//"${BASH_REMATCH[1]}"/''}"
+                if [[ ! "${excludes["${BASH_REMATCH[1]}"]+1}" ]]; then
+                    lineout="${lineout//"${BASH_REMATCH[1]}"/'/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'}"
+                fi
+            done
+            printf "%s\n" "$lineout"
+        done <"$i" >"$i.tmp"
+        cp --attributes-only --preserve "$i" "$i.tmp"
         mv "$i.tmp" "$i"
         if [[ -n "@signingUtils@" ]]; then
             signIfRequired "$i"
