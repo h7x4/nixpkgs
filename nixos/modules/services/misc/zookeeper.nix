@@ -142,13 +142,19 @@ in
 
     systemd.tmpfiles.rules = [
       "d '${cfg.dataDir}' 0700 zookeeper - - -"
+      "d '${cfg.dataDir}/version-2' 0700 zookeeper - - -"
+      "f '${cfg.dataDir}/myid' 0700 zookeeper - - ${toString cfg.id}"
       "Z '${cfg.dataDir}' 0700 zookeeper - - -"
     ];
 
     systemd.services.zookeeper = {
       description = "Zookeeper Daemon";
       wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" ];
+      requires = [ "systemd-tmpfiles-setup.service" ];
+      after = [
+        "systemd-tmpfiles-setup.service"
+        "network.target"
+      ];
       serviceConfig = {
         ExecStart = ''
           ${cfg.jre}/bin/java \
@@ -161,10 +167,6 @@ in
         '';
         User = "zookeeper";
       };
-      preStart = ''
-        echo "${toString cfg.id}" > ${cfg.dataDir}/myid
-        mkdir -p ${cfg.dataDir}/version-2
-      '';
     };
 
     users.users.zookeeper = {
