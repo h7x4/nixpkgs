@@ -109,14 +109,14 @@ in
         djbdns
       ];
       environment.FORWARDONLY = lib.mkIf cfg.forwardOnly "1";
-      preStart = ''
-        rm -rf /var/lib/dnscache
-        dnscache-conf dnscache dnscache /var/lib/dnscache ${config.services.dnscache.ip}
-        rm -rf /var/lib/dnscache/root
-        ln -sf ${dnscache-root} /var/lib/dnscache/root
-      '';
       serviceConfig.StateDirectory = "dnscache";
       serviceConfig.WorkingDirectory = "/var/lib/dnscache";
+      serviceConfig.ExecStartPre = [
+        "${lib.getExe' pkgs.coreutils "rm"} -rf /var/lib/dnscache"
+        "${lib.getExe' djbdns "dnscache-conf"} dnscache dnscache /var/lib/dnscache ${config.services.dnscache.ip}"
+        "${lib.getExe' pkgs.coreutils "rm"} -rf /var/lib/dnscache/root"
+        "${lib.getExe' pkgs.coreutils "ln"} -sf ${dnscache-root} /var/lib/dnscache/root"
+      ];
       serviceConfig.ExecStart = "/var/lib/dnscache/run";
     };
   };
