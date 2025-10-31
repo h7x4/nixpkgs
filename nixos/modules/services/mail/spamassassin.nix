@@ -131,6 +131,7 @@ in
     };
 
     systemd.services.sa-update = {
+      description = "SpamAssassin rule updater";
       # Needs to be able to contact the update server.
       wants = [ "network-online.target" ];
       after = [ "network-online.target" ];
@@ -141,23 +142,32 @@ in
         Group = "spamd";
         StateDirectory = "spamassassin";
         ExecStartPost = "+${config.systemd.package}/bin/systemctl -q --no-block try-reload-or-restart spamd.service";
+
+        SuccessExitStatus = [
+          0
+          1 # No update was available, exit successfully.
+        ];
+
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        PrivateTmp = true;
+        PrivateDevices = true;
+        ProtectHostname = true;
+        ProtectClock = true;
+        ProtectKernelTunables = true;
+        ProtectKernelModules = true;
+        ProtectKernelLogs = true;
+        ProtectControlGroups = true;
+        RestrictNamespaces = true;
+        LockPersonality = true;
+        RestrictRealtime = true;
+        RestrictSUIDSGID = true;
       };
 
       script = ''
-        set +e
-        ${pkgs.spamassassin}/bin/sa-update --verbose --gpghomedir=/var/lib/spamassassin/sa-update-keys/
-        rc=$?
-        set -e
+        ${pkgs.spamassassin}/bin/sa-update --verbose --gpghomedir=/var/lib/spamassassin/sa-update-keys
 
-        if [[ $rc -gt 1 ]]; then
-          # sa-update failed.
-          exit $rc
-        fi
-
-        if [[ $rc -eq 1 ]]; then
-          # No update was available, exit successfully.
-          exit 0
-        fi
+        if [ $? -eq 1 ]; then exit 1; fi
 
         # An update was available and installed. Compile the rules.
         ${pkgs.spamassassin}/bin/sa-compile
@@ -190,11 +200,28 @@ in
       ];
 
       serviceConfig = {
+        Type = "simple";
         User = "spamd";
         Group = "spamd";
-        ExecStart = "+${pkgs.spamassassin}/bin/spamd ${lib.optionalString cfg.debug "-D"} --username=spamd --groupname=spamd --virtual-config-dir=%S/spamassassin/user-%u --allow-tell --pidfile=/run/spamd.pid";
-        ExecReload = "+${pkgs.coreutils}/bin/kill -HUP $MAINPID";
+        ExecStart = "${pkgs.spamassassin}/bin/spamd ${lib.optionalString cfg.debug "-D"} --virtual-config-dir=%S/spamassassin/user-%u --allow-tell --pidfile=/run/spamd.pid";
+        ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
         StateDirectory = "spamassassin";
+        StandardOutput = "null";
+        StandardError = "null";
+
+        ProtectSystem = "full";
+        PrivateTmp = true;
+        PrivateDevices = true;
+        ProtectHostname = true;
+        ProtectClock = true;
+        ProtectKernelTunables = true;
+        ProtectKernelModules = true;
+        ProtectKernelLogs = true;
+        ProtectControlGroups = true;
+        RestrictNamespaces = true;
+        LockPersonality = true;
+        RestrictRealtime = true;
+        RestrictSUIDSGID = true;
       };
     };
   };
