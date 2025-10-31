@@ -380,8 +380,8 @@ let
   };
 
   wgBins = {
-    wireguard = "wg";
-    amneziawg = "awg";
+    wireguard = lib.getExe' pkgs.wireguard-tools "wg";
+    amneziawg = lib.getExe' pkgs.amneziawg-tools "awg";
   };
 
   wgPackages = {
@@ -402,20 +402,16 @@ let
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
+        ConditionFileNotEmpty = values.privateKeyFile;
+        StandardOutput = "file:${values.privateKeyFile}";
+        ExecStartPre = [
+          # If the parent dir does not already exist, create it.
+          # Otherwise, does nothing, keeping existing permissions intact.
+          "${lib.getExe' pkgs.coreutils "mkdir"} -p --mode 0755 '${dirOf values.privateKeyFile}'"
+          "${lib.getExe' pkgs.coreutils "install"} -m700 /dev/null ${values.privateKeyFile}"
+        ];
+        ExecStart = "${wgBins.${values.type}} genkey";
       };
-
-      script = ''
-        set -e
-
-        # If the parent dir does not already exist, create it.
-        # Otherwise, does nothing, keeping existing permissions intact.
-        mkdir -p --mode 0755 "${dirOf values.privateKeyFile}"
-
-        if [ ! -f "${values.privateKeyFile}" ]; then
-          # Write private key file with atomically-correct permissions.
-          (set -e; umask 077; ${wgBins.${values.type}} genkey > "${values.privateKeyFile}")
-        fi
-      '';
     };
 
   peerUnitServiceName =
@@ -446,7 +442,7 @@ let
           peer.presharedKeyFile;
       src = interfaceCfg.socketNamespace;
       dst = interfaceCfg.interfaceNamespace;
-      ip = nsWrap "ip" src dst;
+      ip = nsWrap (lib.getExe' pkgs.iproute2 "ip") src dst;
       wg = nsWrap wgBins.${interfaceCfg.type} src dst;
       dynamicEndpointRefreshSeconds = dynamicRefreshSeconds interfaceCfg peer;
       dynamicRefreshEnabled = dynamicEndpointRefreshSeconds != 0;
@@ -474,79 +470,77 @@ let
       ];
 
       serviceConfig =
-        if !dynamicRefreshEnabled then
+        (
+          if !dynamicRefreshEnabled then
+            {
+              Type = "oneshot";
+              RemainAfterExit = true;
+            }
+          else
+            {
+              Type = "simple"; # re-executes 'wg' indefinitely
+              # Note that `Type = "oneshot"` services with `RemainAfterExit = true`
+              # cannot be used with systemd timers (see `man systemd.timer`),
+              # which is why `simple` with a loop is the best choice here.
+              # It also makes starting and stopping easiest.
+              #
+              # Restart if the service exits (e.g. when wireguard gives up after "Name or service not known" dns failures):
+              Restart = "always";
+              RestartSec =
+                if null != peer.dynamicEndpointRefreshRestartSeconds then
+                  peer.dynamicEndpointRefreshRestartSeconds
+                else
+                  dynamicEndpointRefreshSeconds;
+            }
+        )
+        // (
+          let
+            wg_setup = concatStringsSep " " (
+              [ ''${wg} set ${interfaceName} peer "${peer.publicKey}"'' ]
+              ++ optional (psk != null) ''preshared-key "${psk}"''
+              ++ optional (peer.endpoint != null) ''endpoint "${peer.endpoint}"''
+              ++ optional (
+                peer.persistentKeepalive != null
+              ) ''persistent-keepalive "${toString peer.persistentKeepalive}"''
+              ++ optional (peer.allowedIPs != [ ]) ''allowed-ips "${concatStringsSep "," peer.allowedIPs}"''
+            );
+            route_setup = optionals interfaceCfg.allowedIPsAsRoutes (
+              map (
+                allowedIP:
+                ''${ip} route replace "${allowedIP}" dev "${interfaceName}" table "${interfaceCfg.table}" ${
+                  optionalString (interfaceCfg.metric != null) "metric ${toString interfaceCfg.metric}"
+                }''
+              ) peer.allowedIPs
+            );
+          in
           {
-            Type = "oneshot";
-            RemainAfterExit = true;
-          }
-        else
-          {
-            Type = "simple"; # re-executes 'wg' indefinitely
-            # Note that `Type = "oneshot"` services with `RemainAfterExit = true`
-            # cannot be used with systemd timers (see `man systemd.timer`),
-            # which is why `simple` with a loop is the best choice here.
-            # It also makes starting and stopping easiest.
-            #
-            # Restart if the service exits (e.g. when wireguard gives up after "Name or service not known" dns failures):
-            Restart = "always";
-            RestartSec =
-              if null != peer.dynamicEndpointRefreshRestartSeconds then
-                peer.dynamicEndpointRefreshRestartSeconds
+            ExecStartPre = [ wg_setup ] ++ route_setup;
+
+            ExecStart =
+              if (dynamicEndpointRefreshSeconds != 0) then
+                # Re-execute 'wg' periodically to notice DNS / hostname changes.
+                # Note this will not time out on transient DNS failures such as DNS names
+                # because we have set 'WG_ENDPOINT_RESOLUTION_RETRIES=infinity'.
+                # Also note that 'wg' limits its maximum retry delay to 20 seconds as of writing.
+                "|while ${wg_setup}; do sleep '${toString dynamicEndpointRefreshSeconds}'; done"
               else
-                dynamicEndpointRefreshSeconds;
-          };
+                lib.getExe' pkgs.coreutils "true";
+
+            ExecStopPost =
+              let
+                route_destroy = optionals interfaceCfg.allowedIPsAsRoutes (
+                  map (
+                    allowedIP:
+                    ''${ip} route delete "${allowedIP}" dev "${interfaceName}" table "${interfaceCfg.table}"''
+                  ) peer.allowedIPs
+                );
+              in
+              [ "${wg} set '${interfaceName}' peer '${peer.publicKey}' remove" ] ++ route_destroy;
+          }
+        );
       unitConfig = lib.optionalAttrs dynamicRefreshEnabled {
         StartLimitIntervalSec = 0;
       };
-
-      script =
-        let
-          wg_setup = concatStringsSep " " (
-            [ ''${wg} set ${interfaceName} peer "${peer.publicKey}"'' ]
-            ++ optional (psk != null) ''preshared-key "${psk}"''
-            ++ optional (peer.endpoint != null) ''endpoint "${peer.endpoint}"''
-            ++ optional (
-              peer.persistentKeepalive != null
-            ) ''persistent-keepalive "${toString peer.persistentKeepalive}"''
-            ++ optional (peer.allowedIPs != [ ]) ''allowed-ips "${concatStringsSep "," peer.allowedIPs}"''
-          );
-          route_setup = optionalString interfaceCfg.allowedIPsAsRoutes (
-            concatMapStringsSep "\n" (
-              allowedIP:
-              ''${ip} route replace "${allowedIP}" dev "${interfaceName}" table "${interfaceCfg.table}" ${
-                optionalString (interfaceCfg.metric != null) "metric ${toString interfaceCfg.metric}"
-              }''
-            ) peer.allowedIPs
-          );
-        in
-        ''
-          ${wg_setup}
-          ${route_setup}
-
-          ${optionalString (dynamicEndpointRefreshSeconds != 0) ''
-            # Re-execute 'wg' periodically to notice DNS / hostname changes.
-            # Note this will not time out on transient DNS failures such as DNS names
-            # because we have set 'WG_ENDPOINT_RESOLUTION_RETRIES=infinity'.
-            # Also note that 'wg' limits its maximum retry delay to 20 seconds as of writing.
-            while ${wg_setup}; do
-              sleep "${toString dynamicEndpointRefreshSeconds}";
-            done
-          ''}
-        '';
-
-      postStop =
-        let
-          route_destroy = optionalString interfaceCfg.allowedIPsAsRoutes (
-            concatMapStringsSep "\n" (
-              allowedIP:
-              ''${ip} route delete "${allowedIP}" dev "${interfaceName}" table "${interfaceCfg.table}"''
-            ) peer.allowedIPs
-          );
-        in
-        ''
-          ${wg} set "${interfaceName}" peer "${peer.publicKey}" remove
-          ${route_destroy}
-        '';
     };
 
   # the target is required to start new peer units when they are added
@@ -575,8 +569,8 @@ let
           pkgs.writeText "wg-key" values.privateKey;
       src = values.socketNamespace;
       dst = values.interfaceNamespace;
-      ipPreMove = nsWrap "ip" src null;
-      ipPostMove = nsWrap "ip" src dst;
+      ipPreMove = nsWrap (lib.getExe' pkgs.iproute2 "ip") src null;
+      ipPostMove = nsWrap (lib.getExe' pkgs.iproute2 "ip") src dst;
       wg = nsWrap wgBins.${values.type} src dst;
       ns = if dst == "init" then "1" else dst;
 
@@ -593,39 +587,58 @@ let
         wgPackages.${values.type}
       ];
 
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-      };
+      serviceConfig =
+        let
+          optionalShellScript =
+            name: ls:
+            optional (ls != "") (
+              pkgs.writers.writeBash name {
+                makeWrapperArgs = [
+                  "--prefix"
+                  "PATH"
+                  ":"
+                  (lib.makeBinPath (
+                    with pkgs;
+                    [
+                      kmod
+                      iproute2
+                      wgPackages.${values.type}
+                    ]
+                  ))
+                ];
+              } ls
+            );
+        in
+        {
+          Type = "oneshot";
+          RemainAfterExit = true;
 
-      script = concatStringsSep "\n" (
-        optional (!config.boot.isContainer) "modprobe ${values.type} || true"
-        ++ [
-          values.preSetup
-          ''${ipPreMove} link add dev "${name}" type ${values.type}''
-        ]
-        ++ optional (
-          values.interfaceNamespace != null && values.interfaceNamespace != values.socketNamespace
-        ) ''${ipPreMove} link set "${name}" netns "${ns}"''
-        ++ optional (values.mtu != null) ''${ipPostMove} link set "${name}" mtu ${toString values.mtu}''
-        ++ (map (ip: ''${ipPostMove} address add "${ip}" dev "${name}"'') values.ips)
-        ++ [
-          (concatStringsSep " " (
-            [ ''${wg} set "${name}" private-key "${privKey}"'' ]
-            ++ optional (values.listenPort != null) ''listen-port "${toString values.listenPort}"''
-            ++ optional (values.fwMark != null) ''fwmark "${values.fwMark}"''
-            ++ mapAttrsToList (k: v: ''${toLower k} "${toString v}"'') values.extraOptions
-          ))
-          ''${ipPostMove} link set up dev "${name}"''
-          values.postSetup
-        ]
-      );
+          ExecStart =
+            optionals (!config.boot.isContainer) [ "-${getExe' pkgs.kmod "modprobe"} ${values.type}" ]
+            ++ optionalShellScript "wireguard-${name}-pre-setup" values.preSetup
+            ++ [ "${ipPreMove} link add dev '${name}' type ${values.type}" ]
+            ++ optionals (
+              values.interfaceNamespace != null && values.interfaceNamespace != values.socketNamespace
+            ) [ "${ipPreMove} link set '${name}' netns '${ns}'" ]
+            ++ (map (ip: "${ipPostMove} address add '${ip}' dev '${name}'") values.ips)
+            ++ [
+              (concatStringsSep " " (
+                [ ''${wg} set "${name}" private-key "${privKey}"'' ]
+                ++ optional (values.listenPort != null) ''listen-port "${toString values.listenPort}"''
+                ++ optional (values.fwMark != null) ''fwmark "${values.fwMark}"''
+                ++ mapAttrsToList (k: v: ''${toLower k} "${toString v}"'') values.extraOptions
+              ))
+            ]
+            ++ [
+              "${ipPostMove} link set up dev '${name}'"
+            ]
+            ++ optionalShellScript "wireguard-${name}-post-setup" values.postSetup;
 
-      postStop = ''
-        ${values.preShutdown}
-        ${ipPostMove} link del dev "${name}"
-        ${values.postShutdown}
-      '';
+          ExecStopPost =
+            optionalShellScript "wireguard-${name}-pre-shutdown" values.preShutdown
+            ++ [ "${ipPostMove} link del dev '${name}'" ]
+            ++ optionalShellScript "wireguard-${name}-post-shutdown" values.postShutdown;
+        };
     };
 
   nsWrap =
@@ -637,7 +650,7 @@ let
       ];
       ns = last nsList;
     in
-    if (length nsList > 0 && ns != "init") then ''ip netns exec "${ns}" "${cmd}"'' else cmd;
+    if (length nsList > 0 && ns != "init") then ''${lib.getExe' pkgs.iproute2 "ip"} netns exec "${ns}" "${cmd}"'' else cmd;
 
   usingWg = any (x: x.type == "wireguard") (attrValues cfg.interfaces);
   usingAwg = any (x: x.type == "amneziawg") (attrValues cfg.interfaces);
