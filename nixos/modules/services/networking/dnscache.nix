@@ -113,7 +113,7 @@ in
       serviceConfig.WorkingDirectory = "/var/lib/dnscache";
       serviceConfig.ExecStartPre = [
         "${lib.getExe' pkgs.coreutils "rm"} -rf /var/lib/dnscache"
-        "${lib.getExe' djbdns "dnscache-conf"} dnscache dnscache /var/lib/dnscache ${config.services.dnscache.ip}"
+        "${lib.getExe' pkgs.djbdns "dnscache-conf"} dnscache dnscache /var/lib/dnscache ${config.services.dnscache.ip}"
         "${lib.getExe' pkgs.coreutils "rm"} -rf /var/lib/dnscache/root"
         "${lib.getExe' pkgs.coreutils "ln"} -sf ${dnscache-root} /var/lib/dnscache/root"
       ];
