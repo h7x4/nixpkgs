@@ -369,12 +369,10 @@ in
           PIDFile = pidFile;
           KillMode = "process";
           RuntimeDirectory = "keepalived";
+          RuntimeDirectoryMode = "0700";
           EnvironmentFile = lib.optional (cfg.secretFile != null) cfg.secretFile;
           ExecStartPre = lib.optional (cfg.secretFile != null) (
-            pkgs.writeShellScript "keepalived-pre-start" ''
-              umask 077
-              ${pkgs.envsubst}/bin/envsubst -i "${keepalivedConf}" > ${finalConfigFile}
-            ''
+            "${pkgs.envsubst}/bin/envsubst -i '${keepalivedConf}' -o '${finalConfigFile}'"
           );
           ExecStart =
             "${lib.getExe cfg.package}"
