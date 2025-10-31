@@ -484,6 +484,7 @@ in
         systemd.tmpfiles.rules = lib.optionals cfg.client.enable [
           "d /var/spool/slurmd 755 root root -"
           "d ${cfg.mpi.PmixCliTmpDirBase} 755 root root -"
+          "d ${cfg.stateSaveLocation} 755 ${cfg.user} slurm -"
         ];
 
         services.openssh.settings.X11Forwarding = lib.mkIf cfg.client.enable (lib.mkDefault true);
@@ -521,11 +522,6 @@ in
             PIDFile = "/run/slurmctld.pid";
             ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
           };
-
-          preStart = ''
-            mkdir -p ${cfg.stateSaveLocation}
-            chown -R ${cfg.user}:slurm ${cfg.stateSaveLocation}
-          '';
         };
 
         systemd.services.slurmdbd =
@@ -559,15 +555,13 @@ in
               ''}
             '';
 
-            script = ''
-              export SLURM_CONF=${configPath}
-              exec ${cfg.package}/bin/slurmdbd -D
-            '';
+            environment.SLURM_CONF = configPath;
 
             serviceConfig = {
               RuntimeDirectory = "slurmdbd";
               Type = "simple";
               PIDFile = "/run/slurmdbd.pid";
+              ExecStart = "${lib.getExe' cfg.package "slurmdbd"} -D";
               ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
             };
           };
