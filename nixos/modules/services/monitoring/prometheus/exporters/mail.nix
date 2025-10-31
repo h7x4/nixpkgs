@@ -199,11 +199,9 @@ in
       DynamicUser = false;
       EnvironmentFile = mkIf (cfg.environmentFile != null) [ cfg.environmentFile ];
       RuntimeDirectory = "prometheus-mail-exporter";
+      RuntimeDirectoryMode = "0700";
       ExecStartPre = [
-        "${pkgs.writeShellScript "subst-secrets-mail-exporter" ''
-          umask 0077
-          ${pkgs.envsubst}/bin/envsubst -i ${configFile} -o ''${RUNTIME_DIRECTORY}/mail-exporter.json
-        ''}"
+        "${pkgs.envsubst}/bin/envsubst -i '${configFile}' -o '%t/mail-exporter.json'"
       ];
       ExecStart = ''
         ${pkgs.prometheus-mail-exporter}/bin/mailexporter \
