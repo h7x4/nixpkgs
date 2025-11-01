@@ -122,14 +122,7 @@ let
       '';
     };
 
-in
-
-{
-  # Test the basic setup:
-  #   - automatic interface discovery
-  #   - WPA2 fallbacks
-  #   - connecting to the daemon
-  basic = runTest {
+    basicTest = {
     name = "wpa_supplicant-basic";
     inherit meta;
 
@@ -194,7 +187,7 @@ in
     testScript = ''
       with subtest("Daemon is running and accepting connections"):
           machine.wait_for_unit("wpa_supplicant.service")
-          status = machine.wait_until_succeeds("wpa_cli status")
+          status = machine.wait_until_succeeds("${lib.getExe pkgs.strace} --trace=file wpa_cli status")
           assert "Failed to connect" not in status, \
                  "Failed to connect to the daemon"
 
@@ -220,6 +213,19 @@ in
       machine.copy_from_vm(config_file)
     '';
   };
+in
+
+{
+  # Test the basic setup:
+  #   - automatic interface discovery
+  #   - WPA2 fallbacks
+  #   - connecting to the daemon
+  basic = runTest basicTest;
+
+  # Test the basic setup without dbus
+  withoutDbus = runTest (lib.recursiveUpdate basicTest {
+    nodes.machine.networking.wireless.dbusControlled = false;
+  });
 
   # Test configuring the daemon imperatively
   imperative = runTest {

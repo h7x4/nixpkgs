@@ -56,6 +56,8 @@ let
         "ctrl_interface=/run/wpa_supplicant"
         "ctrl_interface_group=${cfg.userControlled.group}"
         "update_config=1"
+        # "logger_syslog=-1"
+        # "logger_syslog_level=0"
       ]
     )
     ++ [ "pmf=1" ]
@@ -130,26 +132,92 @@ let
       wantedBy = [ "multi-user.target" ];
       stopIfChanged = false;
 
-      path = [ pkgs.wpa_supplicant ];
-      # if `userControl.enable`, the supplicant automatically changes the permissions
-      #  and owning group of the runtime dir; setting `umask` ensures the generated
-      #  config file isn't readable (except to root);  see nixpkgs#267693
-      serviceConfig.UMask = "066";
-      serviceConfig.RuntimeDirectory = "wpa_supplicant";
-      serviceConfig.RuntimeDirectoryMode = "700";
+      serviceConfig = {
+        # if `userControl.enable`, the supplicant automatically changes the permissions
+        #  and owning group of the runtime dir; setting `umask` ensures the generated
+        #  config file isn't readable (except to root);  see nixpkgs#267693
+        UMask = "066";
+        RuntimeDirectory = [
+          "wpa_supplicant"
+          "wpa_supplicant/root-mnt"
+        ];
+        RuntimeDirectoryMode = "700";
+
+        ExecStartPre =
+          optionals (configIsGenerated && !cfg.allowAuxiliaryImperativeNetworks) [
+            # (concatStringsSep " " [
+            #   "|if [ -f /etc/wpa_supplicant.conf ]; then"
+            #     "echo >&2 '<3>/etc/wpa_supplicant.conf present but ignored. Generated ${configFile} is used instead.'"
+            #   "fi"
+            # ]
+            # )
+          ]
+          # ensure wpa_supplicant.conf exists, or the daemon will fail to start
+          ++ optionals cfg.allowAuxiliaryImperativeNetworks [
+            "+${lib.getExe' pkgs.coreutils "touch"} /etc/wpa_supplicant.conf"
+          ];
+
+        RootDirectory = "/run/wpa_supplicant/root-mnt";
+        MountAPIVFS = true;
+        BindPaths = [
+          "/etc"
+          "/run/dbus/system_bus_socket"
+          "/tmp"
+        ];
+        BindReadOnlyPaths = [
+          # "/bin/sh"
+          builtins.storeDir
+        ];
+
+        # wpa_ctrl puts sockets in /tmp
+        PrivateTmp = false;
+        # PrivateTmp = lib.mkIf (configIsGenerated && !cfg.allowAuxiliaryImperativeNetworks) "disconnected";
+
+        CapabilityBoundingSet = [
+          "CAP_NET_ADMIN"
+          "CAP_BLOCK_SUSPEND"
+          "CAP_NET_RAW"
+          "CAP_CHOWN"
+        ];
+        RestrictNamespaces = true;
+        SystemCallFilter = [
+          "@system-service"
+          "~@resources"
+          "@chown"
+        ];
+        ProtectProc = "invisible";
+        SystemCallArchitectures = "native";
+        DeviceAllow = "/dev/rfkill";
+        DevicePolicy = "closed";
+        NoNewPrivileges = true;
+        ProtectKernelLogs = true;
+        ProtectControlGroups = true;
+        ProtectKernelModules = true;
+        ProtectSystem = true;
+        ProtectHome = true;
+        MemoryDenyWriteExecute = true;
+        ProtectHostname = true;
+        LockPersonality = true;
+        RestrictRealtime = true;
+        RestrictSUIDSGID = true;
+        RestrictAddressFamilies = [
+          "AF_INET"
+          "AF_INET6"
+          "AF_NETLINK"
+          "AF_PACKET"
+          # "AF_ALG" # Used for 'linux' TLS backend
+        ] ++ lib.optionals cfg.dbusControlled [
+          "AF_UNIX"
+        ];
+      };
+
+      path = [
+        pkgs.wpa_supplicant
+      ] ++ optionals (iface == null) [
+        config.systemd.package
+      ];
 
       script = ''
-        ${optionalString (configIsGenerated && !cfg.allowAuxiliaryImperativeNetworks) ''
-          if [ -f /etc/wpa_supplicant.conf ]; then
-            echo >&2 "<3>/etc/wpa_supplicant.conf present but ignored. Generated ${configFile} is used instead."
-          fi
-        ''}
-
-        # ensure wpa_supplicant.conf exists, or the daemon will fail to start
-        ${optionalString cfg.allowAuxiliaryImperativeNetworks ''
-          touch /etc/wpa_supplicant.conf
-        ''}
-
         iface_args="-s ${optionalString cfg.dbusControlled "-u"} -D${cfg.driver} ${configStr}"
 
         ${
