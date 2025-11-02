@@ -9,6 +9,7 @@ let
 in
 
 {
+  meta.maintainers = with lib.maintainers; [ h7x4 ];
 
   ###### interface
 
