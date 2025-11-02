@@ -7,16 +7,11 @@
 let
   cfg = config.services.dictd;
 in
-
 {
   meta.maintainers = with lib.maintainers; [ h7x4 ];
 
-  ###### interface
-
   options = {
-
     services.dictd = {
-
       enable = lib.mkOption {
         type = lib.types.bool;
         default = false;
@@ -35,12 +30,8 @@ in
         example = lib.literalExpression "[ pkgs.dictdDBs.nld2eng ]";
         description = "List of databases to make available.";
       };
-
     };
-
   };
-
-  ###### implementation
 
   config =
     let
