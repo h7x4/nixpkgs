@@ -53,15 +53,6 @@ in
         server localhost
       '';
 
-      users.users.dictd = {
-        group = "dictd";
-        description = "DICT.org dictd server";
-        home = "${dictdb}/share/dictd";
-        uid = config.ids.uids.dictd;
-      };
-
-      users.groups.dictd.gid = config.ids.gids.dictd;
-
       systemd.services.dictd = {
         description = "DICT.org Dictionary Server";
         wantedBy = [ "multi-user.target" ];
@@ -72,6 +63,7 @@ in
         # with code 143 instead of exiting with code 0.
         serviceConfig.SuccessExitStatus = [ 143 ];
         serviceConfig.Type = "forking";
+        serviceConfig.DynamicUser = true;
         script = "${cfg.package}/sbin/dictd -s -c ${dictdb}/share/dictd/dictd.conf --locale en_US.UTF-8";
       };
     };
