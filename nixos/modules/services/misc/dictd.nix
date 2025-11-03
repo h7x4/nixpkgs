@@ -20,6 +20,8 @@ in
         '';
       };
 
+      package = lib.mkPackageOption pkgs "dict" { };
+
       DBs = lib.mkOption {
         type = lib.types.listOf lib.types.package;
         default = with pkgs.dictdDBs; [
@@ -45,7 +47,7 @@ in
     lib.mkIf cfg.enable {
 
       # get the command line client on system path to make some use of the service
-      environment.systemPackages = [ pkgs.dict ];
+      environment.systemPackages = [ cfg.package ];
 
       environment.etc."dict.conf".text = ''
         server localhost
@@ -70,7 +72,7 @@ in
         # with code 143 instead of exiting with code 0.
         serviceConfig.SuccessExitStatus = [ 143 ];
         serviceConfig.Type = "forking";
-        script = "${pkgs.dict}/sbin/dictd -s -c ${dictdb}/share/dictd/dictd.conf --locale en_US.UTF-8";
+        script = "${cfg.package}/sbin/dictd -s -c ${dictdb}/share/dictd/dictd.conf --locale en_US.UTF-8";
       };
     };
 }
