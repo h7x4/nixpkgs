@@ -1374,6 +1374,7 @@ in
   slimserver = runTest ./slimserver.nix;
   slipshow = runTest ./slipshow.nix;
   slurm = runTest ./slurm.nix;
+  smartd = import ./smartd.nix { inherit runTest; };
   smokeping = runTest ./smokeping.nix;
   snapcast = runTest ./snapcast.nix;
   snapper = runTest ./snapper.nix;
