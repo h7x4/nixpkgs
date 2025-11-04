@@ -147,4 +147,19 @@ import ./make-test-python.nix {
     machine.succeed("authStarttls")
     machine.succeed("authSmtps")
   '';
+
+  # TODO: test:
+  # - multiuser system
+  # - maildir in homedirs
+  # - forwarding in homedirs (~/.forward)
+  # - blacklist
+  # - email filters
+  # - fcntl (kernel locks) + dotlock
+  # - mailbox quotas
+  # - LDAP users
+  # - DovecotSASL
+  # - PCRE + JIT
+  # - PostgreSQL
+  # - aliasFiles
+  # - mapFiles
 }

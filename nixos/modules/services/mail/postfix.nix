@@ -331,6 +331,7 @@ let
     lib.concatMapStrings (x: x + " ACCEPT\n") cfg.localRecipients
   );
   checkClientAccessFile = pkgs.writeText "postfix-check-client-access" cfg.dnsBlacklistOverrides;
+  # TODO: run `postfix check` on these files.
   mainCfFile = pkgs.writeText "postfix-main.cf" mainCf;
   masterCfFile = pkgs.writeText "postfix-master.cf" masterCfContent;
   transportFile = pkgs.writeText "postfix-transport" cfg.transport;
@@ -939,50 +940,17 @@ in
             ${setgidGroup}.gid = config.ids.gids.postdrop;
           };
 
-        systemd.services.postfix-setup = {
-          description = "Setup for Postfix mail server";
-          serviceConfig.RemainAfterExit = true;
-          serviceConfig.Type = "oneshot";
-          script = ''
-            # Backwards compatibility
-            if [ ! -d /var/lib/postfix ] && [ -d /var/postfix ]; then
-              mkdir -p /var/lib
-              mv /var/postfix /var/lib/postfix
-            fi
-
-            # All permissions set according ${cfg.package}/etc/postfix/postfix-files script
-            mkdir -p /var/lib/postfix /var/lib/postfix/queue/{pid,public,maildrop}
-            chmod 0755 /var/lib/postfix
-            chown root:root /var/lib/postfix
-
-            rm -rf /var/lib/postfix/conf
-            mkdir -p /var/lib/postfix/conf
-            chmod 0755 /var/lib/postfix/conf
-            ln -sf ${cfg.package}/etc/postfix/postfix-files /var/lib/postfix/conf/postfix-files
-            ln -sf ${mainCfFile} /var/lib/postfix/conf/main.cf
-            ln -sf ${masterCfFile} /var/lib/postfix/conf/master.cf
-
-            ${lib.concatStringsSep "\n" (
-              lib.mapAttrsToList (to: from: ''
-                ln -sf ${from} /var/lib/postfix/conf/${to}
-                ${lib.getExe' cfg.package "postalias"} -o -p /var/lib/postfix/conf/${to}
-              '') cfg.aliasFiles
-            )}
-            ${lib.concatStringsSep "\n" (
-              lib.mapAttrsToList (to: from: ''
-                ln -sf ${from} /var/lib/postfix/conf/${to}
-                ${lib.getExe' cfg.package "postmap"} -o -p /var/lib/postfix/conf/${to}
-              '') cfg.mapFiles
-            )}
-
-            mkdir -p /var/spool/mail
-            chown root:root /var/spool/mail
-            chmod a+rwxt /var/spool/mail
-            ln -sf /var/spool/mail /var/
-
-            #Finally delegate to postfix checking remain directories in /var/lib/postfix and set permissions on them
-            ${lib.getExe' cfg.package "postfix"} set-permissions config_directory=/var/lib/postfix/conf
-          '';
+        systemd.tmpfiles.settings."10-postfix" = {
+          "/var/spool/mail".d = {
+            user = "root";
+            group = "root";
+            mode = "1777";
+          };
+          "/var/mail".L = {
+            user = "root";
+            group = "root";
+            argument = "/var/spool/mail";
+          };
         };
 
         systemd.services.postfix = {
@@ -992,10 +960,11 @@ in
           wantedBy = [ "multi-user.target" ];
           after = [
             "network.target"
-            "postfix-setup.service"
+            "systemd-tmpfiles-setup.service"
           ];
-          requires = [ "postfix-setup.service" ];
-          path = [ cfg.package ];
+          requires = [
+            "systemd-tmpfiles-setup.service"
+          ];
 
           serviceConfig = {
             Type = "forking";
@@ -1005,23 +974,84 @@ in
             ExecStop = "${lib.getExe' cfg.package "postfix"} stop";
             ExecReload = "${lib.getExe' cfg.package "postfix"} reload";
 
+            StateDirectory = "postfix";
+            StateDirectoryMode = "0755";
+
+            ExecStartPre = [
+              # Creating these dirs via StateDirectory will force them to be owned by root,
+              # breaking the set-permissions command and the service.
+              "${lib.getExe' pkgs.coreutils "mkdir"} -p /var/lib/postfix/data"
+              "${lib.getExe' pkgs.coreutils "mkdir"} -p /var/lib/postfix/conf"
+              "${lib.getExe' pkgs.coreutils "mkdir"} -p /var/lib/postfix/queue/pid"
+              "${lib.getExe' pkgs.coreutils "mkdir"} -p /var/lib/postfix/queue/public"
+              "${lib.getExe' pkgs.coreutils "mkdir"} -p /var/lib/postfix/queue/maildrop"
+              "${lib.getExe' pkgs.coreutils "ln"} -sf ${cfg.package}/etc/postfix/postfix-files /var/lib/postfix/conf/postfix-files"
+              "${lib.getExe' pkgs.coreutils "ln"} -sf ${mainCfFile} /var/lib/postfix/conf/main.cf"
+              "${lib.getExe' pkgs.coreutils "ln"} -sf ${masterCfFile} /var/lib/postfix/conf/master.cf"
+            ]
+              ++ lib.mapAttrsToList (to: from: "${lib.getExe' pkgs.coreutils "ln"} -sf '${from}' '/var/lib/postfix/conf/${to}'") cfg.aliasFiles
+              ++ lib.mapAttrsToList (to: _from: "${lib.getExe' cfg.package "postalias"} -o -p '/var/lib/postfix/conf/${to}'") cfg.aliasFiles
+              ++ lib.mapAttrsToList (to: from: "${lib.getExe' pkgs.coreutils "ln"} -sf '${from}' '/var/lib/postfix/conf/${to}'") cfg.mapFiles
+              ++ lib.mapAttrsToList (to: _from: "${lib.getExe' cfg.package "postmap"} -o -p '/var/lib/postfix/conf/${to}'") cfg.mapFiles
+              ++ [
+                #Finally delegate to postfix checking remain directories in /var/lib/postfix and set permissions on them
+                "+${lib.getExe' cfg.package "postfix"} set-permissions config_directory=/var/lib/postfix/conf"
+              ];
+
             # Hardening
+            RuntimeDirectory = "postfix/root-mnt";
+            RootDirectory = "/run/postfix/root-mnt";
+            BindPaths = [
+              "/run"
+              "/var/spool/mail"
+            ];
+            BindReadOnlyPaths = [
+              builtins.storeDir
+              "/etc"
+            ];
+
             PrivateTmp = true;
             PrivateDevices = true;
-            ProtectSystem = "full";
-            CapabilityBoundingSet = [ "~CAP_NET_ADMIN CAP_SYS_ADMIN CAP_SYS_BOOT CAP_SYS_MODULE" ];
+            ProtectSystem = "strict";
+            ProtectProc = "invisible";
+            CapabilityBoundingSet = [
+              "CAP_NET_BIND_SERVICE"
+              # The master process uses its root status to read inside
+              # dirs which normally only would be readable to 'postfix'
+              "CAP_DAC_OVERRIDE"
+              # The master process changes UID/GID before forking off
+              # unprivileged children processes.
+              "CAP_SETUID"
+              "CAP_SETGID"
+            ];
+            LockPersonality = true;
             MemoryDenyWriteExecute = true;
+            NoNewPrivileges = true;
+            ProtectClock = true;
+            ProtectControlGroups = true;
+            ProtectHostname = true;
+            ProtectKernelLogs = true;
             ProtectKernelModules = true;
             ProtectKernelTunables = true;
-            ProtectControlGroups = true;
             RestrictAddressFamilies = [
               "AF_INET"
               "AF_INET6"
-              "AF_NETLINK"
               "AF_UNIX"
+              # postfix uses getifaddrs(3) to determine what mail
+              # should be routed internally/externally.
+              "AF_NETLINK"
             ];
+            RestrictSUIDSGID = true;
             RestrictNamespaces = true;
             RestrictRealtime = true;
+            SystemCallArchitectures = "native";
+            SystemCallFilter = [
+              "@system-service"
+              "~@privileged"
+              "~@resources"
+              "@setuid"
+            ];
+            # UMask = "0700";
           };
         };
 
