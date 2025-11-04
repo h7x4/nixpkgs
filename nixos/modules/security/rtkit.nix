@@ -71,6 +71,16 @@ in
         # Canary needs to be realtime.
         RestrictRealtime = false;
 
+        RuntimeDirectory = [ "rtkit/root-mnt" ];
+        RootDirectory = "/run/rtkit/root-mnt";
+        BindPaths = [ "/run/dbus/system_bus_socket" ];
+        BindReadOnlyPaths = [
+          builtins.storeDir
+          "/etc"
+        ];
+        NoExecPaths = "/";
+        ExecPaths = "${package}/libexec/rtkit-daemon";
+
         LockPersonality = true;
         MemoryDenyWriteExecute = true;
         NoNewPrivileges = true;
