@@ -267,6 +267,9 @@ in
             '';
           in
           "${pkgs.smartmontools}/sbin/smartd ${lib.concatStringsSep " " cfg.extraOptions} --no-fork --configfile=${smartdConf}";
+
+        DevicePolicy = lib.mkIf (!cfg.autodetect) "closed";
+        DeviceAllow = lib.mkIf (!cfg.autodetect) (lib.catAttrs "device" cfg.devices);
       };
     };
 
