@@ -67,10 +67,25 @@ in
 
     systemd.packages = [ cfg.package.out ];
 
-    systemd.services.polkit.serviceConfig.ExecStart = [
-      ""
-      "${cfg.package.out}/lib/polkit-1/polkitd ${lib.optionalString (!cfg.debug) "--no-debug"}"
-    ];
+    systemd.services.polkit.serviceConfig = {
+      ExecStart = [
+        ""
+        "${cfg.package.out}/lib/polkit-1/polkitd ${lib.optionalString (!cfg.debug) "--no-debug"}"
+      ];
+
+      RuntimeDirectory = [
+        "polkit-1"
+        "polkit-1/root-mnt"
+      ];
+      RootDirectory = "/run/polkit-1/root-mnt";
+      BindPaths = [ "/run/dbus/system_bus_socket" ];
+      BindReadOnlyPaths = [
+        builtins.storeDir
+        "/etc"
+        "/run/systemd"
+        "/run/current-system/sw/share/polkit-1"
+      ];
+    };
 
     systemd.services.polkit.restartTriggers = [ config.system.path ];
     systemd.services.polkit.stopIfChanged = false;
