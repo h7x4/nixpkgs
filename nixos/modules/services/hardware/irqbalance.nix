@@ -39,6 +39,8 @@ in
       ];
       NoExecPaths = "/";
       ExecPaths = lib.getExe cfg.package;
+
+      TasksMax = "2";
     };
   };
 
