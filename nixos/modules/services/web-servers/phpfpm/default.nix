@@ -270,19 +270,23 @@ in
       description = "PHP FastCGI Process Manager Slice";
     };
 
-    systemd.targets.phpfpm = {
-      description = "PHP FastCGI Process manager pools target";
-      wantedBy = [ "multi-user.target" ];
-    };
+    systemd.sockets = mapAttrs' (
+      pool: poolOpts:
+      nameValuePair "phpfpm-${pool}" {
+        description = "PHP FastCGI Process Manager socket for pool ${pool}";
+        documentation = [ "man:php-fpm(8)" ];
+        wantedBy = [ "sockets.target" ];
+        socketConfig.ListenStream = poolOpts.socket;
+      }
+    ) cfg.pools;
 
     systemd.services = mapAttrs' (
       pool: poolOpts:
       nameValuePair "phpfpm-${pool}" {
         description = "PHP FastCGI Process Manager service for pool ${pool}";
         after = [ "network.target" ];
-        wantedBy = [ "phpfpm.target" ];
-        partOf = [ "phpfpm.target" ];
         documentation = [ "man:php-fpm(8)" ];
+        environment.FPM_SOCKETS  = "${poolOpts.socket}=3";
         serviceConfig =
           let
             cfgFile = fpmCfgFile pool poolOpts;
