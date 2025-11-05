@@ -81,6 +81,8 @@ in
         NoExecPaths = "/";
         ExecPaths = "${package}/libexec/rtkit-daemon";
 
+        # rtkit has 3 pthreads: main thread, canary thread and watchdog thread
+        LimitNPROC = "3";
         LockPersonality = true;
         MemoryDenyWriteExecute = true;
         NoNewPrivileges = true;
