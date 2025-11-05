@@ -81,8 +81,6 @@ in
         NoExecPaths = "/";
         ExecPaths = "${package}/libexec/rtkit-daemon";
 
-        # rtkit has 3 pthreads: main thread, canary thread and watchdog thread
-        LimitNPROC = "3";
         LockPersonality = true;
         MemoryDenyWriteExecute = true;
         NoNewPrivileges = true;
@@ -106,6 +104,8 @@ in
           "@system-service"
           "@mount" # Needs chroot(1)
         ];
+        # rtkit has 3 pthreads: main thread, canary thread and watchdog thread
+        TasksMax = "3";
         UMask = "0777";
       };
     };
