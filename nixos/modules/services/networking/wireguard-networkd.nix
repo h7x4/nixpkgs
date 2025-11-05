@@ -24,6 +24,7 @@ let
   inherit (lib.options) literalExpression mkOption;
   inherit (lib.strings) hasInfix replaceStrings;
   inherit (lib.trivial) flip pipe;
+  inherit (lib.meta) getExe';
 
   removeNulls = filterAttrs (_: v: v != null);
 
@@ -97,17 +98,16 @@ let
       description = "Wireguard dynamic endpoint refresh (${name})";
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
-      path = with pkgs; [
-        iproute2
-        systemd
-      ];
       # networkd doesn't provide a mechanism for refreshing endpoints.
       # See: https://github.com/systemd/systemd/issues/9911
       # This hack does the job but takes down the whole interface to do it.
-      script = ''
-        ip link delete ${name} || :
-        networkctl reload
-      '';
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = [
+          "-${getExe' pkgs.iproute2 "ip"} link delete ${name}"
+          "${getExe' pkgs.systemd "networkctl"} reload"
+        ];
+      };
     };
 
 in

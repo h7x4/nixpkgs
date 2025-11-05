@@ -239,48 +239,37 @@ in
     };
     users.groups.ncps = { };
 
-    systemd.services.ncps-create-directories = {
-      description = "Created required directories by ncps";
-      serviceConfig = {
-        Type = "oneshot";
-        UMask = "0066";
+    systemd.tmpfiles.settings."10-ncps" = {
+      ${cfg.cache.dataPath}.d = lib.mkIf (cfg.cache.dataPath != "/var/lib/ncps") {
+        user = "ncps";
+        group = "ncps";
       };
-      script =
-        (lib.optionalString (cfg.cache.dataPath != "/var/lib/ncps") ''
-          if ! test -d ${cfg.cache.dataPath}; then
-            mkdir -p ${cfg.cache.dataPath}
-            chown ncps:ncps ${cfg.cache.dataPath}
-          fi
-        '')
-        + (lib.optionalString isSqlite ''
-          if ! test -d ${dbDir}; then
-            mkdir -p ${dbDir}
-            chown ncps:ncps ${dbDir}
-          fi
-        '')
-        + (lib.optionalString (cfg.cache.tempPath != "/tmp") ''
-          if ! test -d ${cfg.cache.tempPath}; then
-            mkdir -p ${cfg.cache.tempPath}
-            chown ncps:ncps ${cfg.cache.tempPath}
-          fi
-        '');
-      wantedBy = [ "ncps.service" ];
-      before = [ "ncps.service" ];
+      ${dbDir}.d = lib.mkIf isSqlite {
+        user = "ncps";
+        group = "ncps";
+      };
+      ${cfg.cache.tempPath}.d = lib.mkIf (cfg.cache.tempPath != "/tmp") {
+        user = "ncps";
+        group = "ncps";
+      };
     };
 
     systemd.services.ncps = {
       description = "ncps binary cache proxy service";
 
-      after = [ "network-online.target" ];
-      wants = [ "network-online.target" ];
+      after = [
+        "network-online.target"
+        "systemd-tmpfiles-setup.service"
+      ];
+      wants = [
+        "network-online.target"
+        "systemd-tmpfiles-setup.service"
+      ];
       wantedBy = [ "multi-user.target" ];
-
-      preStart = ''
-        ${lib.getExe cfg.dbmatePackage} --migrations-dir=${cfg.package}/share/ncps/db/migrations --url=${cfg.cache.databaseURL} up
-      '';
 
       serviceConfig = lib.mkMerge [
         {
+          ExecStartPre = "${lib.getExe cfg.dbmatePackage} --migrations-dir=${cfg.package}/share/ncps/db/migrations --url=${cfg.cache.databaseURL} up";
           ExecStart = "${lib.getExe cfg.package} ${globalFlags} serve ${serveFlags}";
           User = "ncps";
           Group = "ncps";

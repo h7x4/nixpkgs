@@ -1564,21 +1564,16 @@ in
           baseServiceConfig
           {
             description = "Synapse Matrix homeserver";
-            preStart = ''
-              ${cfg.package}/bin/synapse_homeserver \
-                --config-path ${configFile} \
-                --keys-directory ${cfg.dataDir} \
-                --generate-keys
-            '';
             serviceConfig = {
               ExecStartPre = [
-                (
-                  "+"
-                  + (pkgs.writeShellScript "matrix-synapse-fix-permissions" ''
-                    chown matrix-synapse:matrix-synapse ${cfg.settings.signing_key_path}
-                    chmod 0600 ${cfg.settings.signing_key_path}
-                  '')
-                )
+                ''
+                  ${cfg.package}/bin/synapse_homeserver \
+                    --config-path ${configFile} \
+                    --keys-directory ${cfg.dataDir} \
+                    --generate-keys
+                ''
+                "+${lib.getExe' pkgs.coreutils "chown"} matrix-synapse:matrix-synapse ${cfg.settings.signing_key_path}"
+                "+${lib.getExe' pkgs.coreutils "chmod"} 0600 ${cfg.settings.signing_key_path}"
               ];
               ExecStart = ''
                 ${cfg.package}/bin/synapse_homeserver \

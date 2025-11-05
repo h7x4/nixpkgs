@@ -120,32 +120,25 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    systemd.tmpfiles.settings."10-plex".${cfg.dataDir}.d = {
+      inherit (cfg) user group;
+      mode = "0755";
+    };
+
     # Most of this is just copied from the RPM package's systemd service file.
     systemd.services.plex = {
       description = "Plex Media Server";
-      after = [ "network.target" ];
+      requires = [ "systemd-tmpfiles-setup.service" ];
+      after = [
+        "systemd-tmpfiles-setup.service"
+        "network.target"
+      ];
       wantedBy = [ "multi-user.target" ];
 
       serviceConfig = {
         Type = "simple";
         User = cfg.user;
         Group = cfg.group;
-
-        # Run the pre-start script with full permissions (the "!" prefix) so it
-        # can create the data directory if necessary.
-        ExecStartPre =
-          let
-            preStartScript = pkgs.writeScript "plex-run-prestart" ''
-              #!${pkgs.bash}/bin/bash
-
-              # Create data directory if it doesn't exist
-              if ! test -d "$PLEX_DATADIR"; then
-                echo "Creating initial Plex data directory in: $PLEX_DATADIR"
-                install -d -m 0755 -o "${cfg.user}" -g "${cfg.group}" "$PLEX_DATADIR"
-              fi
-            '';
-          in
-          "!${preStartScript}";
 
         ExecStart = "${cfg.package}/bin/plexmediaserver";
         KillSignal = "SIGQUIT";
