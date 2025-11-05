@@ -79,49 +79,99 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-
     environment.systemPackages = [ pkgs.uptimed ];
 
+    environment.etc."uptimed/uptimed.conf".text =
+      lib.concatStringsSep "\n" (lib.mapAttrsToList (
+        k: v: if builtins.isList v then lib.concatMapStringsSep "\n" (v': "${k}=${v'}") v else "${k}=${v}"
+      ) cfg.settings);
+
     systemd.services.uptimed = {
-      unitConfig.Documentation = "man:uptimed(8) man:uprecords(1)";
+      documentation = [
+        "man:uptimed(8)"
+        "man:uprecords(1)"
+      ];
       description = "uptimed service";
       wantedBy = [ "multi-user.target" ];
 
+      restartTriggers = [ config.environment.etc."uptimed/uptimed.conf".source ];
+
       serviceConfig = {
         Type = "notify";
+        NotifyAccess = "all";
         Restart = "on-failure";
-        User = "uptimed";
-        DynamicUser = true;
+        DynamicUser = lib.mkIf (cfg.settings.SEND_EMAIL == "0") true;
+        # ExecStartPre = [
+        #   "${lib.getExe' pkgs.coreutils "ls"} -lah /etc"
+        #   "${lib.getExe' pkgs.coreutils "ls"} -lah /etc/uptimed"
+        # ];
+        ExecStart = "${lib.getExe pkgs.strace} -f ${pkgs.uptimed}/sbin/uptimed -f -i 1";
+        PIDFile = cfg.settings.PIDFILE;
+
         Nice = 19;
         IOSchedulingClass = "idle";
-        PrivateTmp = "yes";
-        PrivateNetwork = "yes";
-        NoNewPrivileges = "yes";
-        StateDirectory = [ "uptimed" ];
-        RuntimeDirectory = [ "uptimed" ];
-        InaccessibleDirectories = "/home";
-        ExecStart = "${pkgs.uptimed}/sbin/uptimed -f";
 
-        BindReadOnlyPaths =
-          let
-            configFile = lib.pipe cfg.settings [
-              (lib.mapAttrsToList (
-                k: v: if builtins.isList v then lib.mapConcatStringsSep "\n" (v': "${k}=${v'}") v else "${k}=${v}"
-              ))
-              (lib.concatStringsSep "\n")
-              (pkgs.writeText "uptimed.conf")
-            ];
-          in
-          [
-            "${configFile}:/etc/uptimed/uptimed.conf"
-          ];
+        StateDirectory = "uptimed";
+        StateDirectoryMode = "0755";
+        ConfigurationDirectory = "uptimed::ro";
+        RuntimeDirectory = [
+          "uptimed"
+          "uptimed/root-mnt"
+        ];
+
+        RootDirectory = "/run/uptimed/root-mnt";
+        BindPaths = [
+          "-/var/lib/postfix"
+        ];
+        BindReadOnlyPaths = [
+          builtins.storeDir
+          "/bin/sh"
+          "/etc"
+          # "/etc/static/uptimed"
+          "-/run/wrappers/bin/sendmail"
+          # "-/var/lib/postfix"
+        ];
+
+        # Needs to be able to access /proc/stat to read bootid
+        ProcSubset = "all";
+
+        # AmbientCapabilities = "";
+        CapabilityBoundingSet = "CAP_SYS_PTRACE";
+        DeviceAllow = null;
+        DevicePolicy = "closed";
+        LockPersonality = true;
+        MemoryDenyWriteExecute = true;
+        NoNewPrivileges = true;
+        PrivateNetwork = true;
+        PrivateDevices = true;
+        PrivateIPC = true;
+        PrivateTmp = "disconnected";
+        PrivateUsers = lib.mkIf (cfg.settings.SEND_EMAIL == "0") true;
+        ProtectClock = true;
+        ProtectControlGroups = "strict";
+        ProtectHome = true;
+        ProtectHostname = true;
+        ProtectProc = "invisible";
+        ProtectSystem = "strict";
+        ProtectKernelLogs = true;
+        IPAddressDeny = "any";
+        ProtectKernelModules = true;
+        ProtectKernelTunables = true;
+        RestrictAddressFamilies = [
+          "AF_UNIX" # To talk with $NOTIFY_SOCKET
+        ];
+        RestrictNamespaces = true;
+        RestrictRealtime = true;
+        RestrictSUIDSGID = true;
+        SystemCallArchitectures = "native";
+        SystemCallFilter = [
+          "@system-service"
+          "~@privileged"
+          "~@resources"
+          "@debug"
+        ];
+        UMask = "022";
       };
-
-      preStart = ''
-        if ! test -f ${stateDir}/bootid ; then
-          ${pkgs.uptimed}/sbin/uptimed -b
-        fi
-      '';
     };
   };
 }
