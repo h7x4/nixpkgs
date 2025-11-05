@@ -85,6 +85,8 @@ in
         "/run/systemd"
         "/run/current-system/sw/share/polkit-1"
       ];
+
+      TasksMax = "1";
     };
 
     systemd.services.polkit.restartTriggers = [ config.system.path ];
