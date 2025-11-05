@@ -12,13 +12,7 @@ in
 
   options = {
     services.dictd = {
-      enable = lib.mkOption {
-        type = lib.types.bool;
-        default = false;
-        description = ''
-          Whether to enable the DICT.org dictionary server.
-        '';
-      };
+      enable = lib.mkEnableOption "the DICT.org dictionary server";
 
       package = lib.mkPackageOption pkgs "dict" { };
 
@@ -32,6 +26,10 @@ in
         example = lib.literalExpression "[ pkgs.dictdDBs.nld2eng ]";
         description = "List of databases to make available.";
       };
+
+      # host
+      # port
+      # extraArgs
     };
   };
 
