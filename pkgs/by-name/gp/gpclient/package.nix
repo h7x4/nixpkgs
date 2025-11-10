@@ -52,17 +52,16 @@ rustPlatform.buildRustPackage {
   '';
 
   postInstall = ''
-    mkdir -p $out/share/applications
-    cp packaging/files/usr/share/applications/gpgui.desktop $out/share/applications/gpgui.desktop
+    cp -r packaging/files/usr/share $out/share
+
+    substituteInPlace $out/share/applications/gpgui.desktop \
+      --replace-fail /usr/bin/gpclient gpclient
+    substituteInPlace $out/share/polkit-1/actions/com.yuezk.gpgui.policy \
+      --replace-fail /usr/bin/gpservice $out/bin/gpservice
   '';
 
   preFixup = ''
     wrapProgram "$out/bin/gpclient" \
       --prefix GIO_EXTRA_MODULES : ${glib-networking}/lib/gio/modules
-  '';
-
-  postFixup = ''
-    substituteInPlace $out/share/applications/gpgui.desktop \
-      --replace-fail /usr/bin/gpclient gpclient
   '';
 }
