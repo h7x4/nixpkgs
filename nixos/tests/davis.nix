@@ -58,7 +58,7 @@
     machine1.wait_for_unit("postgresql.target")
     machine1.wait_for_unit("davis-env-setup.service")
     machine1.wait_for_unit("davis-db-migrate.service")
-    machine1.wait_for_unit("phpfpm-davis.service")
+    machine1.wait_for_unit("phpfpm-davis.socket")
 
     with subtest("welcome screen loads"):
         machine1.succeed(
@@ -78,7 +78,7 @@
         )
     machine2.wait_for_unit("davis-env-setup.service")
     machine2.wait_for_unit("davis-db-migrate.service")
-    machine2.wait_for_unit("phpfpm-davis.service")
+    machine2.wait_for_unit("phpfpm-davis.socket")
     r = machine2.succeed(
         "find /var/lib/davis/var/log"
     )

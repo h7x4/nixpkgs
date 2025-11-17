@@ -33,7 +33,7 @@ in
     testScript = ''
       start_all()
 
-      machine.wait_for_unit("phpfpm-mediawiki.service")
+      machine.wait_for_unit("phpfpm-mediawiki.socket")
 
       page = machine.succeed("curl -fL http://localhost/")
       assert "MediaWiki has been installed" in page
@@ -48,7 +48,7 @@ in
     testScript = ''
       start_all()
 
-      machine.wait_for_unit("phpfpm-mediawiki.service")
+      machine.wait_for_unit("phpfpm-mediawiki.socket")
 
       page = machine.succeed("curl -fL http://localhost/")
       assert "MediaWiki has been installed" in page
@@ -64,7 +64,7 @@ in
       { nodes, ... }:
       ''
         start_all()
-        machine.wait_for_unit("phpfpm-mediawiki.service")
+        machine.wait_for_unit("phpfpm-mediawiki.socket")
         env = (
           "SCRIPT_NAME=/index.php",
           "SCRIPT_FILENAME=${nodes.machine.services.mediawiki.finalPackage}/share/mediawiki/index.php",
@@ -85,7 +85,7 @@ in
     testScript = ''
       start_all()
 
-      machine.wait_for_unit("phpfpm-mediawiki.service")
+      machine.wait_for_unit("phpfpm-mediawiki.socket")
       machine.wait_for_unit("nginx.service")
 
       page = machine.succeed("curl -fL http://localhost/")

@@ -1224,8 +1224,8 @@ let
         };
       };
       exporterTest = ''
-        wait_for_unit("phpfpm-php-fpm-exporter.service")
-        wait_for_unit("prometheus-php-fpm-exporter.service")
+        wait_for_unit("phpfpm-php-fpm-exporter.socket")
+        wait_for_unit("prometheus-php-fpm-exporter.socket")
         succeed("curl -sSf http://localhost:9253/metrics | grep 'phpfpm_up{.*} 1'")
       '';
     };

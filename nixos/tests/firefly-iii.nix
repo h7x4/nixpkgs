@@ -101,7 +101,7 @@ in
     };
 
   testScript = ''
-    fireflySqlite.wait_for_unit("phpfpm-firefly-iii.service")
+    fireflySqlite.wait_for_unit("phpfpm-firefly-iii.socket")
     fireflySqlite.wait_for_unit("nginx.service")
     fireflySqlite.succeed("curl -fvvv -Ls http://localhost/ | grep 'Firefly III'")
     fireflySqlite.succeed("curl -fvvv -Ls http://localhost/v1/js/app.js")
@@ -111,7 +111,7 @@ in
     fireflyPostgresql.wait_for_unit("postgresql.target")
     fireflyPostgresql.succeed("curl -fvvv -Ls http://localhost/ | grep 'Firefly III'")
     fireflyPostgresql.succeed("systemctl start firefly-iii-cron.service")
-    fireflyMysql.wait_for_unit("phpfpm-firefly-iii.service")
+    fireflyMysql.wait_for_unit("phpfpm-firefly-iii.socket")
     fireflyMysql.wait_for_unit("nginx.service")
     fireflyMysql.wait_for_unit("mysql.service")
     fireflyMysql.succeed("curl -fvvv -Ls http://localhost/ | grep 'Firefly III'")

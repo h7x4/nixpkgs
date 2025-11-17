@@ -243,7 +243,7 @@ in
     ''
       ejabberdctl = "su ejabberd -s $(which ejabberdctl) "
 
-      server.wait_for_unit("phpfpm-movim.service")
+      server.wait_for_unit("phpfpm-movim.socket")
       server.wait_for_unit("h2o.service")
       server.wait_for_open_port(${builtins.toString movim.port})
       server.wait_for_open_port(80)

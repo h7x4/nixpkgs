@@ -24,7 +24,7 @@
 
   testScript = ''
     # Wait for Pixelfed PHP pool
-    server.wait_for_unit("phpfpm-pixelfed.service")
+    server.wait_for_unit("phpfpm-pixelfed.socket")
     # Wait for NGINX
     server.wait_for_unit("nginx.service")
     # Wait for HTTP port

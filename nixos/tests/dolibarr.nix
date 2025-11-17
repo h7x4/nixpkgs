@@ -52,7 +52,7 @@
 
       # wait for app
       for machine in (nginx_mysql, h2o_postgresql):
-        machine.wait_for_unit("phpfpm-dolibarr.service")
+        machine.wait_for_unit("phpfpm-dolibarr.socket")
 
       # wait for web servers
       nginx_mysql.wait_for_unit("nginx.service")
