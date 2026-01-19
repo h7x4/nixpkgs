@@ -16,6 +16,61 @@ in
 
       package = lib.mkPackageOption pkgs "dict" { };
 
+      settings = {
+            global = lib.mkOption {
+              type = lib.types.submodule {
+                freeformType = with lib.types; either (listOf str) str;
+                options = {
+                  port = lib.mkOption {
+                    type = lib.types.port;
+                    description = "Port on which dictd will listen.";
+                    default = 2628;
+                  };
+                };
+              };
+            };
+
+
+            # database
+
+            access = lib.mkOption {
+              allow = lib.mkOption {
+                type = lib.types.listOf lib.types.str;
+                default = [ ];
+                example = [ ];
+              };
+
+              deny = lib.mkOption {
+                type = lib.types.listOf lib.types.str;
+                default = [ ];
+                example = [ ];
+              };
+
+              authonly = lib.mkOption {
+                type = lib.types.listOf lib.types.str;
+                default = [ ];
+                example = [ ];
+              };
+
+              user =
+            };
+
+            user = lib.mkOption {
+              type = lib.types.attrsOf lib.types.path;
+              example = {
+                "alice" = "/path/to/alices/shared/secret";
+                "bob" = "/path/to/bobs/shared/secret";
+              };
+              description = "Mapping of usernames to paths to their shared secret files for authentication.";
+              default = { };
+            };
+
+          };
+        };
+        default = { };
+        description = "";
+      };
+
       DBs = lib.mkOption {
         type = lib.types.listOf lib.types.package;
         default = with pkgs.dictdDBs; [
@@ -28,7 +83,13 @@ in
       };
 
       # host
-      # port
+
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = 2628;
+        description = "Port on which dictd will listen.";
+      };
+
       # extraArgs
     };
   };
