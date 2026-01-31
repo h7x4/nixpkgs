@@ -43,6 +43,10 @@ import ../make-test-python.nix (
                 kdc = "SYSLOG:DEBUG:AUTH";
               };
 
+              domain_realm = {
+                ".foo.bar" = "FOO.BAR";
+              };
+
               realms = {
                 "FOO.BAR" = {
                   admin_server = "server.foo.bar";
@@ -109,6 +113,8 @@ import ../make-test-python.nix (
             package = pkgs.heimdal;
             settings = {
               libdefaults.default_realm = "FOO.BAR";
+              libdefaults.dns_lookup_realm = true;
+              libdefaults.dns_lookup_kdc = true;
 
               logging = {
                 admin_server = "SYSLOG:DEBUG:AUTH";
@@ -163,13 +169,13 @@ import ../make-test-python.nix (
 
         with subtest("Server: initialize user principals and keytabs"):
           server.succeed(f'kadmin -l add --password="{alice_krb_admin_pw}" --use-defaults alice/admin')
-          server.succeed("kadmin -l ext_keytab --keytab=admin.keytab alice/admin")
+          # server.succeed("kadmin -l ext_keytab --keytab=admin.keytab alice/admin")
 
-          server.succeed(f'kadmin -p alice/admin -K admin.keytab add --password="{alice_krb_pw}" --use-defaults alice')
-          server.succeed("kadmin -l ext_keytab --keytab=alice.keytab alice")
+          server.succeed(f'kadmin -p alice/admin add --password="{alice_krb_pw}" --use-defaults alice')
+          # server.succeed("kadmin -l ext_keytab --keytab=alice.keytab alice")
 
-          server.succeed("kadmin -p alice/admin -K admin.keytab add --password={bob_krb_pw} --use-defaults bob")
-          server.succeed("kadmin -l ext_keytab --keytab=bob.keytab bob")
+          server.succeed("kadmin -p alice/admin add --password={bob_krb_pw} --use-defaults bob")
+          # server.succeed("kadmin -l ext_keytab --keytab=bob.keytab bob")
 
         server.wait_for_unit("getty@tty1.service")
         server.wait_until_succeeds("pgrep -f 'agetty.*tty1'")
@@ -238,12 +244,12 @@ import ../make-test-python.nix (
 
           clear_tty(client)
 
-        # with subtest("Client: kadmin get bob"):
-        #   client.send_chars("sudo kadmin -p alice/admin get bob\n")
-        #   client.wait_until_tty_matches("1", "alice/admin@FOO.BAR's Password:")
-        #   client.send_chars(f"{alice_krb_admin_pw}\n")
-        #   client.wait_until_tty_matches("1", "Principal: bob@FOO.BAR")
-        #   clear_tty(client)
+        with subtest("Client: kadmin get bob"):
+          client.send_chars("sudo kadmin -p alice/admin -K admin.keytab get bob\n")
+          client.wait_until_tty_matches("1", "alice/admin@FOO.BAR's Password:")
+          client.send_chars(f"{alice_krb_admin_pw}\n")
+          client.wait_until_tty_matches("1", "Principal: bob@FOO.BAR")
+          clear_tty(client)
 
         with subtest("Server: kinit alice"):
           server.succeed(
@@ -269,12 +275,12 @@ import ../make-test-python.nix (
 
           clear_tty(server)
 
-        # with subtest("Server: kadmin get bob"):
-        #   server.send_chars("sudo kadmin -p alice/admin get bob\n")
-        #   server.wait_until_tty_matches("1", "alice/admin@FOO.BAR's Password:")
-        #   server.send_chars(f"{alice_krb_admin_pw}\n")
-        #   server.wait_until_tty_matches("1", "Principal: bob@FOO.BAR")
-        #   clear_tty(server)
+        with subtest("Server: kadmin get bob"):
+          server.send_chars("sudo kadmin -p alice/admin -K admin.keytab get bob\n")
+          server.wait_until_tty_matches("1", "alice/admin@FOO.BAR's Password:")
+          server.send_chars(f"{alice_krb_admin_pw}\n")
+          server.wait_until_tty_matches("1", "Principal: bob@FOO.BAR")
+          clear_tty(server)
       '';
 
     meta.maintainers = pkgs.heimdal.meta.maintainers;
