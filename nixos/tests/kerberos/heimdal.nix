@@ -290,6 +290,11 @@ import ../make-test-python.nix (
           output = client.succeed(f"${lib.getExe kpasswd} {alice_old_krb_pw} {alice_krb_pw}")
           assert "Success : Password changed" in output
 
+        with subtest("Client: kadmin get bob"):
+          output = kadmin(client, "get bob")
+          print(output)
+          assert "Principal: bob@FOO.BAR" in output
+
         with subtest("Server: kinit alice"):
           kinit(server, "alice", alice_krb_pw)
 
@@ -298,6 +303,10 @@ import ../make-test-python.nix (
           alice_krb_pw = random_password()
           output = server.succeed(f"${lib.getExe kpasswd} {alice_old_krb_pw} {alice_krb_pw}")
           assert "Success : Password changed" in output
+
+        with subtest("Server: kadmin get bob"):
+          output = kadmin(server, "get bob")
+          assert "Principal: bob@FOO.BAR" in output
       '';
 
     meta.maintainers = pkgs.heimdal.meta.maintainers;
