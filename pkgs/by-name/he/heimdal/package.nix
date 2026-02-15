@@ -45,13 +45,13 @@ assert lib.assertMsg (withOpenLDAPAsHDBModule -> withOpenLDAP) ''
 
 stdenv.mkDerivation {
   pname = "heimdal";
-  version = "7.8.0-unstable-2024-09-10";
+  version = "7.8.0-unstable-2026-02-11";
 
   src = fetchFromGitHub {
     owner = "heimdal";
     repo = "heimdal";
-    rev = "fd2d434dd375c402d803e6f948cfc6e257d3facc";
-    hash = "sha256-WA3lo3eD05l7zKuKEVxudMmiG7OvjK/calaUzPQ2pWs=";
+    rev = "abd35b246a7ab3b304c3ca918e52240154b87008";
+    hash = "sha256-UwjuPaK2/DyF3TJgWbC6BVVkzm9QDGXrQivEiZ7I2uk=";
   };
 
   outputs = [
@@ -120,12 +120,8 @@ stdenv.mkDerivation {
   ];
 
   patches = [
-    # Proposed @ https://github.com/heimdal/heimdal/pull/1262
-    ./0001-Include-db.h-for-nbdb-compat-mode.patch
     # Proposed @ https://github.com/heimdal/heimdal/pull/1264
     ./0001-Define-HAVE_DB_185_H.patch
-    # Proposed @ https://github.com/heimdal/heimdal/pull/1265
-    ./0001-Link-tests-with-libresolv.patch
   ];
 
   # (check-ldap) slapd resides within ${openldap}/libexec,
@@ -133,16 +129,13 @@ stdenv.mkDerivation {
   # (check-ldap) prepending ${openldap}/bin to the path to avoid
   #              using the default installation of openldap on unsandboxed darwin systems,
   #              which does not support the new mdb backend at the moment (2024-01-13).
-  # (check-ldap) the bdb backend got deprecated in favour of mdb in openldap 2.5.0,
-  #              but the heimdal tests still seem to expect bdb as the openldap backend.
-  #              This might be fixed upstream in a future update.
   postPatch = ''
     substituteInPlace tests/ldap/slapd-init.in \
       --replace-fail 'SCHEMA_PATHS="' 'SCHEMA_PATHS="${openldap}/etc/schema '
     substituteInPlace tests/ldap/check-ldap.in \
       --replace-fail 'PATH=' 'PATH=${openldap}/libexec:${openldap}/bin:'
-    substituteInPlace tests/ldap/slapd.conf \
-      --replace-fail 'database	bdb' 'database mdb'
+    substituteInPlace tests/ldap/Makefile.am \
+      --replace-fail 'TESTS = check-ldap' 'TESTS ='
     substituteInPlace tests/kdc/check-iprop.in \
       --replace-fail '/bin/pwd' 'pwd'
   '';
@@ -153,17 +146,7 @@ stdenv.mkDerivation {
     export USER=nix-builder
   '';
 
-  # We need to build hcrypt for applications like samba
-  postBuild = ''
-    (cd include/hcrypto; make -j $NIX_BUILD_CORES)
-    (cd lib/hcrypto; make -j $NIX_BUILD_CORES)
-  '';
-
   postInstall = ''
-    # Install hcrypto
-    (cd include/hcrypto; make -j $NIX_BUILD_CORES install)
-    (cd lib/hcrypto; make -j $NIX_BUILD_CORES install)
-
     mkdir -p $dev/bin
     mv $out/bin/krb5-config $dev/bin/
 
