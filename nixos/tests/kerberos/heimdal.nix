@@ -1,5 +1,5 @@
 import ../make-test-python.nix (
-  { pkgs, ... }:
+  { pkgs, lib, ... }:
   {
     name = "kerberos_server-heimdal";
 
@@ -130,6 +130,84 @@ import ../make-test-python.nix (
 
     testScript =
       { nodes, ... }:
+      let
+        expectTemplate =
+          program: argc: interaction:
+          pkgs.writeScriptBin "${program}-auto-password" ''
+            #!${pkgs.expect}/bin/expect -f
+
+            set timeout 30
+            ${lib.concatMapStringsSep "\n" (i: "set arg${toString i} [lindex $argv ${toString i}]") (
+              lib.range 0 (argc - 1)
+            )}
+            set args [lrange $argv ${toString argc} end]
+            eval spawn ${program} $args
+
+            ${interaction}
+
+            expect eof
+            set exit_status [lindex [wait] 3]
+            exit $exit_status
+          '';
+
+        kadmin = expectTemplate "kadmin" 1 ''
+          expect {
+              "alice/admin@FOO.BAR's Password: " {
+                  send -- "$arg0\n"
+              }
+              timeout {
+                  puts stderr "Error: Timeout waiting for password prompt"
+                  exit 2
+              }
+              eof {
+                  puts stderr "Error: kadmin exited unexpectedly"
+                  break
+              }
+          }
+        '';
+
+        ktutil = expectTemplate "ktutil" 1 ''
+          expect {
+              "alice/admin@FOO.BAR's Password: " {
+                  send -- "$arg0\n"
+              }
+              timeout {
+                  puts stderr "Error: Timeout waiting for password prompt"
+                  exit 2
+              }
+              eof {
+                  puts stderr "Error: ktutil exited unexpectedly"
+                  break
+              }
+          }
+        '';
+
+        kpasswd = expectTemplate "kpasswd" 2 ''
+          set exchanges [list \
+              [list "alice@FOO.BAR's Password: " $arg0] \
+              [list "New password: " $arg1] \
+              [list "Verify password - New password: " $arg1] \
+          ]
+
+          foreach pair $exchanges {
+              lassign $pair prompt reply
+
+              expect {
+                  -exact $prompt {
+                      send -- "$reply\n"
+                  }
+                  timeout {
+                      puts stderr "Error: Timeout waiting for: $prompt"
+                      exit 2
+                  }
+                  eof {
+                      puts stderr "Error: Unexpected EOF while waiting for: $prompt"
+                      exit 3
+                  }
+              }
+          }
+        '';
+      in
       ''
         import string
         import random
@@ -138,7 +216,6 @@ import ../make-test-python.nix (
         start_all()
 
         with subtest("Server: initialize realm"):
-          # for unit in ["kadmind.service", "kdc.socket", "kpasswdd.socket"]:
           for unit in ["kadmind.service", "kdc.service", "kpasswdd.service"]:
               server.wait_for_unit(unit)
 
@@ -150,35 +227,44 @@ import ../make-test-python.nix (
         alice_krb_pw = "alice_hunter2"
         alice_old_krb_pw = ""
         alice_krb_admin_pw = "alice_admin_hunter2"
+        bob_krb_pw = "bob_hunter2"
 
         def random_password():
-          password_chars = string.ascii_letters + string.digits + string.punctuation.replace('"', "")
+          password_chars = string.ascii_letters + string.digits + "-_"
           return "".join(random.choice(password_chars) for _ in range(16))
 
-        with subtest("Server: initialize user principals and keytabs"):
-          server.succeed(f'kadmin -l add --password="{alice_krb_admin_pw}" --use-defaults alice/admin')
-          server.succeed("kadmin -l ext_keytab --keytab=admin.keytab alice/admin")
+        def kinit(node, user, password):
+          node.succeed(
+            f"echo '{password}' > /tmp/pw.txt",
+            f"kinit --password-file=/tmp/pw.txt {user}",
+            "rm /tmp/pw.txt",
+          )
+          tickets = node.succeed("klist")
+          assert f"Principal: {user}@FOO.BAR" in tickets
 
-          server.succeed(f'kadmin -p alice/admin -K admin.keytab add --password="{alice_krb_pw}" --use-defaults alice')
-          server.succeed("kadmin -l ext_keytab --keytab=alice.keytab alice")
+        def kadmin(node, command, localAuth=False):
+          if localAuth:
+            return node.succeed(f"kadmin -l {command}")
+          else:
+            return node.succeed(f"${lib.getExe kadmin} '{alice_krb_admin_pw}' -p alice/admin {command}")
+
+        with subtest("Server: initialize user principals and keytabs"):
+          kadmin(server, f'add --password="{alice_krb_admin_pw}" --use-defaults alice/admin', localAuth=True)
+          kadmin(server, f'add --password="{alice_krb_pw}" --use-defaults alice')
+          kadmin(server, f'add --password="{bob_krb_pw}" --use-defaults bob')
+          kadmin(server, 'check')
 
         server.wait_for_unit("getty@tty1.service")
         server.wait_until_succeeds("pgrep -f 'agetty.*tty1'")
         server.wait_for_unit("default.target")
 
         with subtest("Server: initialize host principal with keytab"):
-          server.send_chars("sudo ktutil get -p alice/admin host/server.foo.bar\n")
-          server.wait_until_tty_matches("1", "password for alice:")
-          server.send_chars("${nodes.server.config.users.users.alice.password}\n")
-          server.wait_until_tty_matches("1", "alice/admin@FOO.BAR's Password:")
-          server.send_chars(f'{alice_krb_admin_pw}\n')
+          server.succeed(f"${lib.getExe ktutil} '{alice_krb_admin_pw}' get -p alice/admin host/server.foo.bar")
           server.wait_for_file("/etc/krb5.keytab")
 
-          ktutil_list = server.succeed("sudo ktutil list")
+          ktutil_list = server.succeed("ktutil list")
           if not "host/server.foo.bar" in ktutil_list:
             exit(1)
-
-          server.send_chars("clear\n")
 
         client.systemctl("start network-online.target")
         client.wait_for_unit("network-online.target")
@@ -187,71 +273,31 @@ import ../make-test-python.nix (
         client.wait_for_unit("default.target")
 
         with subtest("Client: initialize host principal with keytab"):
-          client.succeed(
-            f'echo "{alice_krb_admin_pw}" > pw.txt',
-            "kinit -p --password-file=pw.txt alice/admin",
-          )
-
-          client.send_chars("sudo ktutil get -p alice/admin host/client.foo.bar\n")
-          client.wait_until_tty_matches("1", "password for alice:")
-          client.send_chars("${nodes.client.config.users.users.alice.password}\n")
-          client.wait_until_tty_matches("1", "alice/admin@FOO.BAR's Password:")
-          client.send_chars(f"{alice_krb_admin_pw}\n")
+          kinit(client, "alice/admin", alice_krb_admin_pw)
+          client.succeed(f"${lib.getExe ktutil} '{alice_krb_admin_pw}' get -p alice/admin host/client.foo.bar")
           client.wait_for_file("/etc/krb5.keytab")
 
-          ktutil_list = client.succeed("sudo ktutil list")
+          ktutil_list = client.succeed("ktutil list")
           if not "host/client.foo.bar" in ktutil_list:
             exit(1)
 
-          client.send_chars("clear\n")
-
         with subtest("Client: kinit alice"):
-          client.succeed(
-            f"echo '{alice_krb_pw}' > pw.txt",
-            "kinit -p --password-file=pw.txt alice",
-          )
-          tickets = client.succeed("klist")
-          assert "Principal: alice@FOO.BAR" in tickets
-          client.send_chars("clear\n")
+          kinit(client, "alice", alice_krb_pw)
 
         with subtest("Client: kpasswd alice"):
           alice_old_krb_pw = alice_krb_pw
           alice_krb_pw = random_password()
-          client.send_chars("kpasswd\n")
-          client.wait_until_tty_matches("1", "alice@FOO.BAR's Password:")
-          client.send_chars(f"{alice_old_krb_pw}\n", 0.1)
-          client.wait_until_tty_matches("1", "New password:")
-          client.send_chars(f"{alice_krb_pw}\n", 0.1)
-          client.wait_until_tty_matches("1", "Verify password - New password:")
-          client.send_chars(f"{alice_krb_pw}\n", 0.1)
-
-          client.wait_until_tty_matches("1", "Success : Password changed")
-
-          client.send_chars("clear\n")
+          output = client.succeed(f"${lib.getExe kpasswd} {alice_old_krb_pw} {alice_krb_pw}")
+          assert "Success : Password changed" in output
 
         with subtest("Server: kinit alice"):
-          server.succeed(
-            "echo 'alice_pw_2' > pw.txt"
-            "kinit -p --password-file=pw.txt alice",
-          )
-          tickets = client.succeed("klist")
-          assert "Principal: alice@FOO.BAR" in tickets
-          server.send_chars("clear\n")
+          kinit(server, "alice", alice_krb_pw)
 
         with subtest("Server: kpasswd alice"):
           alice_old_krb_pw = alice_krb_pw
           alice_krb_pw = random_password()
-          server.send_chars("kpasswd\n")
-          server.wait_until_tty_matches("1", "alice@FOO.BAR's Password:")
-          server.send_chars(f"{alice_old_krb_pw}\n", 0.1)
-          server.wait_until_tty_matches("1", "New password:")
-          server.send_chars(f"{alice_krb_pw}\n", 0.1)
-          server.wait_until_tty_matches("1", "Verify password - New password:")
-          server.send_chars(f"{alice_krb_pw}\n", 0.1)
-
-          server.wait_until_tty_matches("1", "Success : Password changed")
-
-          server.send_chars("clear\n")
+          output = server.succeed(f"${lib.getExe kpasswd} {alice_old_krb_pw} {alice_krb_pw}")
+          assert "Success : Password changed" in output
       '';
 
     meta.maintainers = pkgs.heimdal.meta.maintainers;
