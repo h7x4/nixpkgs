@@ -1756,13 +1756,13 @@ runPhase() {
     dumpVars
 
     local startTime endTime
-    startTime=$(date +"%s")
+    startTime=$EPOCHSECONDS
 
     # Evaluate the variable named $curPhase if it exists, otherwise the
     # function named $curPhase.
     eval "${!curPhase:-$curPhase}"
 
-    endTime=$(date +"%s")
+    endTime=$EPOCHSECONDS
 
     showPhaseFooter "$curPhase" "$startTime" "$endTime"
 
