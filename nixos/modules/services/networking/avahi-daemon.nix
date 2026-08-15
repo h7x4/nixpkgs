@@ -328,6 +328,9 @@ in
     users.groups.avahi = { };
 
     system.nssModules = lib.optional (cfg.nssmdns4 || cfg.nssmdns6) pkgs.nssmdns;
+    system.nssDatabases.systemdConfinementPassthrough.addresses = lib.mkIf (cfg.nssmdns4 || cfg.nssmdns6) {
+      multicast = lib.mkDefault true;
+    };
     system.nssDatabases.hosts =
       let
         mdns =

@@ -88,6 +88,11 @@ in
   config = lib.mkIf cfg.enable {
     environment.etc."nscd.conf".text = cfg.config;
 
+    system.nssDatabases.systemdConfinementPassthrough.paths."/run/nscd/socket" = {
+      enable = lib.mkDefault true;
+      writable = lib.mkDefault true;
+    };
+
     users.users.${cfg.user} = {
       isSystemUser = true;
       group = cfg.group;

@@ -15,6 +15,7 @@ let
     literalExpression
     mapAttrs'
     mapAttrsToList
+    mkDefault
     mkIf
     mkMerge
     mkOption
@@ -184,6 +185,17 @@ in
       # system.nssModules is configured in nixos/modules/system/boot/systemd.nix
       # added with order 501 to allow modules to go before with mkBefore
       system.nssDatabases.hosts = (mkOrder 501 [ "resolve [!UNAVAIL=return]" ]);
+
+      system.nssDatabases.systemdConfinementPassthrough = {
+        paths."/run/systemd/resolve/io.systemd.Resolve" = {
+          enable = mkDefault true;
+          writable = mkDefault true;
+        };
+        addresses = mkIf ((cfg.settings.Resolve.DNSStubListener or null) != false) {
+          "127.0.0.53" = mkDefault true;
+          "127.0.0.54" = mkDefault true;
+        };
+      };
 
       systemd.additionalUpstreamSystemUnits = [
         "systemd-resolved.service"

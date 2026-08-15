@@ -199,6 +199,10 @@ in
         passwd = [ "sss" ];
         services = [ "sss" ];
         shadow = [ "sss" ];
+        systemdConfinementPassthrough.paths."/var/lib/sss/pipes/nss" = {
+          enable = lib.mkDefault true;
+          writable = lib.mkDefault true;
+        };
       };
       services.dbus.packages = [ pkgs.sssd ];
     })
