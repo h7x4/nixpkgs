@@ -1704,6 +1704,7 @@ in
   systemd-bpf = runTest ./systemd-bpf.nix;
   systemd-capsules = runTest ./systemd-capsules.nix;
   systemd-confinement = handleTest ./systemd-confinement { };
+  systemd-confinement-nss-passthrough = runTest ./systemd-confinement/nss-passthrough.nix;
   systemd-coredump = runTest ./systemd-coredump.nix;
   systemd-credentials-tpm2 = runTest ./systemd-credentials-tpm2.nix;
   systemd-cryptenroll = runTest ./systemd-cryptenroll.nix;
