@@ -2,7 +2,6 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }:
 {
@@ -120,6 +119,83 @@
           This option only takes effect if nscd is enabled.
         '';
         default = [ ];
+      };
+
+      # See ../../security/systemd-confinement.nix
+      systemdConfinementPassthrough = {
+        paths = lib.mkOption {
+          type = lib.types.attrsOf (
+            lib.types.submodule {
+              options = {
+                enable = lib.mkEnableOption "";
+                writable = lib.mkEnableOption "";
+                optional = lib.mkEnableOption "" // {
+                  description = ''
+                    Whether to skip this entry (rather than failing unit startup)
+                    when its source path doesn't exist.
+                  '';
+                };
+              };
+            }
+          );
+          description = ''
+            Filesystem paths to be made available to
+            [confined systemd units](#opt-services.systemd._name_.confinement.enable)
+            by default.
+
+            ::: {.note}
+            {option}`optional` is enabled by default to avoid breaking all confined
+            units when a source path is missing. If you know for sure that a source
+            path will always exist, you can set `optional = false` to enforce its presence.
+            :::
+          '';
+          default = { };
+          example = {
+            "/etc/shadow" = {
+              enable = true;
+              optional = false;
+            };
+            "/run/nscd/socket" = {
+              enable = true;
+              writable = true;
+            };
+            "/var/lib/sss/pipes/nss".enable = true;
+          };
+        };
+
+        addresses = lib.mkOption {
+          type =
+            let
+              octet = "(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])";
+              ipv4Address = "${octet}(\\.${octet}){3}";
+              ipv6Address = "[0-9a-fA-F:]+";
+              prefixLength = "(/[0-9]{1,3})?";
+              specialKeyword = [
+                "any"
+                "localhost"
+                "link-local"
+                "multicast"
+              ];
+              addressRegex = "((${ipv4Address}|${ipv6Address})${prefixLength}|${lib.concatStringsSep "|" specialKeyword})";
+            in
+            lib.types.addCheck (lib.types.attrsOf lib.types.bool) (
+              v: lib.all (addr: builtins.match addressRegex addr != null) (lib.attrNames v)
+            )
+            // {
+              description = "<ip-address> or <ip-address>/<prefix-length> or one of ${
+                lib.concatMapStringsSep ", " (x: "'${x}'") specialKeyword
+              }";
+            };
+          description = ''
+            IP addresses to be made available to
+            [confined systemd units](#opt-services.systemd._name_.confinement.enable)
+            by default.
+          '';
+          default = { };
+          example = {
+            "127.0.0.53" = true;
+          };
+        };
       };
     };
   };

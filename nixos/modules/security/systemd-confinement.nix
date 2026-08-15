@@ -120,6 +120,21 @@ in
             '';
           };
 
+          options.confinement.enableNssPassthrough = lib.mkOption {
+            type = types.bool;
+            default = true;
+            description = ''
+              Whether to make the paths and addresses configured in
+              {option}`system.nssDatabases.systemdConfinementPassthrough`
+              available inside this unit's chroot.
+
+              ::: {.warning}
+              Units that set {option}`PrivateNetwork = true;` will not be able to access any
+              addresses passed through {option}`system.nssDatabases.systemdConfinementPassthrough.addresses`.
+              :::
+            '';
+          };
+
           config =
             let
               inherit (config.confinement) binSh fullUnit;
@@ -251,8 +266,35 @@ in
                 fi
               done < "$closureInfo/store-paths" >> "$serviceFile"
             '';
+
+        nssPassthroughCfg = config.system.nssDatabases.systemdConfinementPassthrough;
+        nssPassthroughEnabledPaths = lib.filterAttrs (_: v: v.enable) nssPassthroughCfg.paths;
+        nssPassthroughEnabledAddresses = lib.filterAttrs (_: enable: enable) nssPassthroughCfg.addresses;
+
+        mkNssPassthroughPathEntry = path: pathCfg: "${lib.optionalString pathCfg.optional "-"}${path}";
+
+        nssPassthroughConfigFile = (pkgs.formats.systemd { }).generate "nss-passthrough.conf" {
+          Service = lib.filterAttrs (_: v: v != [ ]) {
+            BindPaths = lib.mapAttrsToList mkNssPassthroughPathEntry (
+              lib.filterAttrs (_: pathCfg: pathCfg.writable) nssPassthroughEnabledPaths
+            );
+            BindReadOnlyPaths = lib.mapAttrsToList mkNssPassthroughPathEntry (
+              lib.filterAttrs (_: pathCfg: !pathCfg.writable) nssPassthroughEnabledPaths
+            );
+            IPAddressAllow = lib.attrNames nssPassthroughEnabledAddresses;
+          };
+        };
+
+        nssPassthroughPackage = pkgs.linkFarm "${mkPathSafeName name}-nss-passthrough" {
+          "etc/systemd/system/${name}.service.d/nss-passthrough.conf" = nssPassthroughConfigFile;
+        };
       in
       lib.optional cfg.confinement.enable chrootPaths
+      ++ lib.optional (
+        cfg.confinement.enable
+        && cfg.confinement.enableNssPassthrough
+        && (nssPassthroughEnabledPaths != { } || nssPassthroughEnabledAddresses != { })
+      ) nssPassthroughPackage
     ) config.systemd.services
   );
 }
