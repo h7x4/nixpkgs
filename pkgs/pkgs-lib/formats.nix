@@ -470,7 +470,7 @@ optionalAttrs allowAliases aliases
 
   javaProperties = (import ./formats/java-properties/default.nix { inherit lib pkgs; }).format;
 
-  json = (import ./formats/json/default.nix { inherit lib pkgs; }).format;
+  json = (import ./formats/json/default.nix { inherit lib pkgs mkFormat; }).format;
 
   keyValue = (import ./formats/key-value/default.nix { inherit lib pkgs; }).format;
 
