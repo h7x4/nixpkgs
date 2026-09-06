@@ -461,7 +461,7 @@ optionalAttrs allowAliases aliases
 
   hcl1 = (import ./formats/hcl1/default.nix { inherit lib pkgs json; }).format;
 
-  hocon = (import ./formats/hocon/default.nix { inherit lib pkgs; }).format;
+  hocon = (import ./formats/hocon/default.nix { inherit lib pkgs mkFormat; }).format;
 
   ini = (import ./formats/ini/default.nix { inherit lib pkgs; }).format;
 

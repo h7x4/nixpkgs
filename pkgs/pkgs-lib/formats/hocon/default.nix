@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  mkFormat,
 }:
 let
   inherit (pkgs) buildPackages callPackage;
@@ -30,17 +31,65 @@ let
         ConfigFactory.parse_file(argv[1])
       '';
 in
-{
-  format =
-    {
-      generator ? hocon-generator,
-      validator ? hocon-validator,
-      doCheck ? true,
-    }:
+
+mkFormat (formatConfig: {
+  name = "hocon";
+
+  features = {
+    enableSubstitution = true;
+    enableIncluded = true;
+    enableAppend = true;
+  };
+
+  type =
     let
-      hoconLib = {
-        mkInclude =
-          value:
+      type' =
+        with lib.types;
+        let
+          atomType = nullOr (oneOf [
+            bool
+            float
+            int
+            path
+            str
+          ]);
+
+          includeType = addCheck attrs (x: (x._type or null) == "include");
+          substitutionType = addCheck attrs (x: (x._type or null) == "substitution");
+          appendType = addCheck attrs (x: (x._type or null) == "append");
+
+          disabledTypeTags =
+            lib.optional (!formatConfig.features.enableIncluded) "include"
+            ++ lib.optional (!formatConfig.eatures.enableSubstitution) "substitution"
+            ++ lib.optional (!formatConfig.eatures.enableAppend) "append";
+
+          baseType = oneOf (
+            [
+              atomType
+              (addCheck (listOf atomType) (lib.all atomType.check))
+            ]
+            ++ lib.optional formatConfig.features.enableIncluded (
+              addCheck (listOf includeType) (lib.all includeType.check)
+            )
+            ++ lib.optional formatConfig.features.enableSubstitution substitutionType
+            ++ lib.optional formatConfig.features.enableAppend appendType
+            ++ [ (attrsOf type') ]
+          );
+        in
+        baseType
+        // {
+          description = "HOCON value";
+          check = x: baseType.check x && !(lib.isAttrs x && lib.elem (x._type or null) disabledTypeTags);
+        };
+    in
+    type';
+
+  lib = {
+    mkInclude =
+      value:
+      lib.throwIf (!formatConfig.features.enableIncluded)
+        "hocon.lib.mkInclude is disabled via `features.enableIncluded`"
+        (
           let
             includeStatement =
               if lib.isAttrs value && !(lib.isDerivation value) then
@@ -69,15 +118,23 @@ in
               Type of HOCON mkInclude is not of type 'file', 'url' or 'classpath':
               ${(lib.generators.toPretty { }) includeStatement}
             '';
-          includeStatement;
+          includeStatement
+        );
 
-        mkAppend = value: {
+    mkAppend =
+      value:
+      lib.throwIf (!formatConfig.features.enableAppend)
+        "hocon.lib.mkAppend is disabled via `features.enableAppend`"
+        {
           inherit value;
           _type = "append";
         };
 
-        mkSubstitution =
-          value:
+    mkSubstitution =
+      value:
+      lib.throwIf (!formatConfig.features.enableSubstitution)
+        "hocon.lib.mkSubstitution is disabled via `features.enableSubstitution`"
+        (
           if lib.isString value then
             {
               inherit value;
@@ -96,88 +153,22 @@ in
               value = value.value;
               optional = value.optional or false;
               _type = "substitution";
-            };
-      };
+            }
+        );
+  };
 
-    in
-    {
-      type =
-        let
-          type' =
-            with lib.types;
-            let
-              atomType = nullOr (oneOf [
-                bool
-                float
-                int
-                path
-                str
-              ]);
+  nativeBuildInputs = [
+    pkgs.jq
+    hocon-generator
+  ];
+  buildPhase = ''
+    jq .value "$NIX_ATTRS_JSON_FILE" | hocon-generator > output
+  '';
 
-              includeType = addCheck attrs (x: (x._type or null) == "include");
-            in
-            (oneOf [
-              atomType
-              (addCheck (listOf atomType) (lib.all atomType.check))
-              (addCheck (listOf includeType) (lib.all includeType.check))
-              (attrsOf type')
-            ])
-            // {
-              description = "HOCON value";
-            };
-        in
-        type';
-
-      lib = hoconLib;
-
-      generate =
-        name: value:
-        callPackage
-          (
-            {
-              stdenvNoCC,
-              hocon-generator,
-              hocon-validator,
-              writeText,
-            }:
-            stdenvNoCC.mkDerivation (finalAttrs: {
-              inherit name;
-
-              dontUnpack = true;
-              preferLocalBuild = true;
-
-              json = builtins.toJSON value;
-
-              strictDeps = true;
-              nativeBuildInputs = [ hocon-generator ];
-              buildPhase = ''
-                runHook preBuild
-                printf "%s" "$json" | hocon-generator > output.conf
-                runHook postBuild
-              '';
-
-              inherit doCheck;
-              nativeCheckInputs = [ hocon-validator ];
-              checkPhase = ''
-                runHook preCheck
-                hocon-validator output.conf
-                runHook postCheck
-              '';
-
-              installPhase = ''
-                runHook preInstall
-                mv output.conf $out
-                runHook postInstall
-              '';
-
-              __structuredAttrs = true;
-
-              passthru.json = writeText "${finalAttrs.name}.json" finalAttrs.json;
-            })
-          )
-          {
-            hocon-generator = generator;
-            hocon-validator = validator;
-          };
-    };
-}
+  nativeCheckInputs = [
+    hocon-validator
+  ];
+  formatCheckPhase = ''
+    hocon-validator output
+  '';
+})
