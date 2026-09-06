@@ -100,9 +100,7 @@ optionalAttrs allowAliases aliases
   iniWithGlobalSection =
     (import ./formats/ini-with-global-section/default.nix { inherit lib pkgs; }).format;
 
-  inherit (import ./formats/java-properties/default.nix { inherit lib pkgs; })
-    javaProperties
-    ;
+  javaProperties = (import ./formats/java-properties/default.nix { inherit lib pkgs; }).format;
 
   json = (import ./formats/json/default.nix { inherit lib pkgs; }).format;
 
