@@ -4,7 +4,7 @@
   name = "gocron";
   meta.maintainers = with pkgs.lib.maintainers; [ juliusfreudenberger ];
 
-  nodes.machine = {
+  containers.machine = {
     services.gocron = {
       enable = true;
       settings = {
