@@ -9,6 +9,7 @@
   libnfnetlink,
   libnetfilter_conntrack,
   libnetfilter_queue,
+  nixosTests,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -48,6 +49,8 @@ stdenv.mkDerivation (finalAttrs: {
   env.CFLAGS = "-O2 -fno-strict-aliasing";
 
   enableParallelBuilding = true;
+
+  passthru.tests.nixos = nixosTests.tcpcrypt;
 
   meta = {
     broken = stdenv.hostPlatform.isDarwin;
